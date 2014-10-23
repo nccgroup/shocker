@@ -629,7 +629,9 @@ def main():
      
  Released under the GNU Affero General Public License
  (http://www.gnu.org/licenses/agpl-3.0.html)
+    
     """ 
+    
     # Handle CTRL-c elegently
     signal.signal(signal.SIGINT, signal_handler)
 
@@ -637,9 +639,6 @@ def main():
     parser = argparse.ArgumentParser(
         description='A Shellshock scanner and exploitation tool',
         epilog='Examples of use can be found in the source code' 
-        './shocker.py 127.0.0.1 -e "cat /etc/passwd" -c "/cgi-bin/test.cgi"\n' +
-        'Scan /cgi-bin/test.cgi on localhost and attempt to car /etc/passwd' +
-        'if it is present'
         )
     parser.add_argument(
         'host', 
