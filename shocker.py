@@ -601,12 +601,10 @@ def exploit_cgi(host, proxy, target_list, exploit, verbose):
                     print "[!] %s looks vulnerable" % target 
                     print "[!] Response returned was:" 
                     # print "\n\033[92m" + result + "\033[0m"
-                    # print "\n%s" % result
                     buf = StringIO.StringIO(result)
                     for line in buf:
                         if line.strip() != success_flag: 
                             print "%s" % line.strip()
-                    print "\n"
                     buf.close()
                 else:
                     print "[-] Not vulnerable" 
