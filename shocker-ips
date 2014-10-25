@@ -1,0 +1,19 @@
+# Enter IPs and IP ranges one per line, no commas or anything else other than digits, dots, dashes and slashes
+# For instance:
+# 192.168.1.1
+# 192.168.1.1-254
+# 192.168.2.0/24
+# 192.168.3-4.0
+#
+# Rough regex pattern matching for these patterns with:
+# ^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$
+# ^\d{1,3}(-\d{1,3})?\.\d{1,3}(-\d{1,3})?\.\d{1,3}(-\d{1,3})?\.\d{1,3}(-\d{1,3})?$
+# ^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/[1-2][0-4]$
+#
+# FQDNs also allowed
+# Rough regex: ^(\w+\.)+\w+$
+192.168.1.1
+192.168.1.1-254
+192.168.2.0/24
+192.168.3-4.0
+ww.watsonian.com

@@ -50,6 +50,7 @@ Implement some form of progress indicator for slow tasks
 Fix problem with proxy returning 200 for unavailable URLs/false positives
 Add Windows and *nix colour support
 Prettify
+Move cgi list into a seperate file
 Other stuff. Probably.
 
 Thanks to...
@@ -488,23 +489,24 @@ def signal_handler(signal, frame):
     sys.exit(0)
 
 
-def check_host(host, port, verbose):
-    try:
-        print "[+] Checking setup..."
-        if verbose: print "[I] Checking to see if %s resolves..." % host
-        ipaddr = socket.gethostbyname(host)
-        if verbose: print "[I] Resolved ok"
-        if verbose: print "[I] Checking to see if %s is reachable..." % host
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.settimeout(5.0)
-        s.connect((ipaddr, int(port)))
-        s.close()
-        if verbose: print "[I] %s seems reachable..." % host
-        print "[+] Good to go!"
-    except Exception as e:
-        print "[-] Exception: %s" % e
-        print "[-] Exiting..."
-        exit(1)
+def check_host(host_target_list, port, verbose):
+    print "[+] Checking setup..."
+    for host in host_target_list:
+        try:
+            if verbose: print "[I] Checking to see if %s resolves..." % host
+            ipaddr = socket.gethostbyname(host)
+            if verbose: print "[I] Resolved ok"
+            if verbose: print "[I] Checking to see if %s is reachable..." % host
+            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            s.settimeout(5.0)
+            s.connect((ipaddr, int(port)))
+            s.close()
+            if verbose: print "[I] %s seems reachable..." % host
+        except Exception as e:
+            print "[-] Exception - %s: %s" % (host, e)
+            print "[-] Exiting..."
+            exit(1)
+    print "[+] Good to go!"
 
 
 def scan_host(protocol, host, port, proxy, verbose):
@@ -613,6 +615,24 @@ def exploit_cgi(host, proxy, target_list, exploit, verbose):
             finally:
                 pass
 
+def validate_address(hostaddress):
+    """ Attempt to identify if proposed host address is invalid """
+    return True
+
+def get_targets_from_file(file):
+    host_target_list = []
+    with open(file, 'r') as f:
+        for line in f:
+            line = line.strip()
+            if line[0] is not "#":
+                if validate_address(line):
+                    host_target_list.append(line)
+                else:
+                    print "%s in %s appears invalid. Exiting..." % (line, f)
+                    exit(1)
+    print "DEBUG: %s" % host_target_list
+    return host_target_list
+
 
 def main():
     print """
@@ -638,9 +658,18 @@ def main():
         description='A Shellshock scanner and exploitation tool',
         epilog='Examples of use can be found in the source code' 
         )
-    parser.add_argument(
-        'host', 
-        help='The target host'
+    targets = parser.add_mutually_exclusive_group(required=True)
+    targets.add_argument(
+        '--Hostname',
+        '-H',
+        type=str,
+        help='A target host'
+        )
+    targets.add_argument(
+        '--file',
+	'-f',
+        type=str,
+        help='File containing a list of targets'
         )
     parser.add_argument(
         '--port',
@@ -689,7 +718,9 @@ def main():
     args = parser.parse_args()
 
     # Assign options to variables
-    host = args.host
+    host_target_list = [args.Hostname]
+    if args.file is not None:
+        host_target_list = get_targets_from_file(args.file)
     port = str(args.port)
     if args.proxy is not None:
         proxy = args.proxy
@@ -712,7 +743,7 @@ def main():
         cgi_list = [args.cgi]
 
     # Check to see host resolves and is reachable on the chosen port
-    check_host(host, port, verbose)
+    check_host(host_target_list, port, verbose)
 
     # Go through the cgi_list looking for any present on the target host
     target_list = scan_host(protocol, host, port, proxy, verbose)
