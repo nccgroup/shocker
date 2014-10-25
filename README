@@ -49,6 +49,7 @@ Pre 0.4
 TODO
 
 Thread the initial host check now that multiple targets are supported (and could be make this bit time consuming)
+Add option to skip initial host checks for the sake of speed?
 Add some slightly more useful exploitation options. (Shells?)
 Add a summary of results before exiting
 Save results to a file? Format?
@@ -59,7 +60,6 @@ Add Windows and *nix colour support
 Prettify
 Move cgi list into a seperate file
 Get rid of the spurious blank lines in the output
-Explode IP ranges
 Other stuff. Probably.
 
 Thanks to...
