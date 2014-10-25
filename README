@@ -22,6 +22,9 @@ Scans for http://127.0.0.1/cgi-bin/test.cgi and, if found, attempts to cat
 Scan www.example.com on port 8001 using SSL for all scripts in cgi_list and
 attempts the default exploit for any found
 
+./shocker.py -f ./hostlist
+Scans all hosts listed in the file ./hostlist with the default options
+
 Changes in version 0.6
 * Preventing return codes other than 200 from being considered successes
 * Added ability to specify multiple targets in a file
