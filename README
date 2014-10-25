@@ -1,4 +1,5 @@
-shocker.py v0.4
+"""
+shocker.py v0.6
 A tool to find and exploit webservers vulnerable to Shellshock
 
 ##############################################################################
@@ -11,3 +12,52 @@ A tool to find and exploit webservers vulnerable to Shellshock
 # Released under the GNU Affero General Public License                       #
 # (http://www.gnu.org/licenses/agpl-3.0.html)                                #
 ##############################################################################
+
+Usage examples:
+./shocker.py -H 127.0.0.1 -e "/bin/cat /etc/passwd" -c /cgi-bin/test.cgi
+Scans for http://127.0.0.1/cgi-bin/test.cgi and, if found, attempts to cat 
+/etc/passwd
+
+./shocker.py -H www.example.com -p 8001 -s
+Scan www.example.com on port 8001 using SSL for all scripts in cgi_list and
+attempts the default exploit for any found
+
+Changes in version 0.6
+* Preventing return codes other than 200 from being considered successes
+* Added ability to specify multiple targets in a file
+
+Changes in version 0.5
+* Added ability to specify a single script to target rather than using cgi_list
+* Introduced a timeout on socket operations for host_check
+* Added some usage examples in the script header
+* Added an epilogue to the help text indicating presence of examples
+
+Changes in version 0.4
+* Introduced a thread count limit defaulting to 10
+* Removed colour support until I can figure out how to make it work in\
+    Windows and *nix equally well
+* Spelling corrections
+* More comprehensive cgi_list
+* Removes success_flag from output
+
+Pre 0.4
+* No idea
+
+TODO
+
+Thread the initial host check now that multiple targets are supported (and could be make this bit time consuming)
+Add some slightly more useful exploitation options. (Shells?)
+Add a summary of results before exiting
+Save results to a file? Format?
+Eventually the idea is to include multiple possible vectors but currently only one is checked.
+Implement some form of progress indicator for slow tasks
+Fix problem with proxy returning 200 for unavailable URLs/false positives
+Add Windows and *nix colour support
+Prettify
+Move cgi list into a seperate file
+Get rid of the spurious blank lines in the output
+Explode IP ranges
+Other stuff. Probably.
+
+Thanks to...
+Anthony Caulfield @ NCC for time and effort reviewing early versions
