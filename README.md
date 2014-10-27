@@ -15,29 +15,47 @@ Help Text
 -------------
 usage: 
 shocker.py 
+
 [-h] (--Hostname HOSTNAME | --file FILE) 
+
 [--port PORT]
+
 [--exploit EXPLOIT]
+
 [--cgi CGI] 
+
 [--proxy PROXY] 
+
 [--ssl]
+
 [--threads THREADS]
+
 [--verbose]
 
 optional arguments:
+
 -h, --help            show this help message and exit
+
 --Hostname HOSTNAME, -H HOSTNAME
                       A target host
+
 --file FILE, -f FILE  File containing a list of targets
+
 --port PORT, -p PORT  The target port number (default=80)
+
 --exploit EXPLOIT, -e EXPLOIT
                       Command to execute (default=/bin/uname -a)
+
 --cgi CGI, -c CGI     Single CGI to check (e.g. /cgi-bin/test.cgi)
+
 --proxy PROXY         *A BIT BROKEN RIGHT NOW* Proxy to be used in the form
                       'ip:port'
+
 --ssl, -s             Use SSL (default=False)
+
 --threads THREADS, -t THREADS
                       Maximum number of threads (default=10, max=100)
+
 --verbose, -v         Be verbose in output
 
 Usage Examples
