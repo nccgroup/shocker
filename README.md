@@ -11,17 +11,42 @@ https://github.com/nccgroup/shocker
 
 Released under AGPL see LICENSE for more information
 
+Help Text
+-------------
+usage: shocker.py [-h] (--Hostname HOSTNAME | --file FILE) [--port PORT]
+                  [--exploit EXPLOIT] [--cgi CGI] [--proxy PROXY] [--ssl]
+                  [--threads THREADS] [--verbose]
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --Hostname HOSTNAME, -H HOSTNAME
+                        A target host
+  --file FILE, -f FILE  File containing a list of targets
+  --port PORT, -p PORT  The target port number (default=80)
+  --exploit EXPLOIT, -e EXPLOIT
+                        Command to execute (default=/bin/uname -a)
+  --cgi CGI, -c CGI     Single CGI to check (e.g. /cgi-bin/test.cgi)
+  --proxy PROXY         *A BIT BROKEN RIGHT NOW* Proxy to be used in the form
+                        'ip:port'
+  --ssl, -s             Use SSL (default=False)
+  --threads THREADS, -t THREADS
+                        Maximum number of threads (default=10, max=100)
+  --verbose, -v         Be verbose in output
+
 Usage
 -------------
 ./shocker.py -H 127.0.0.1 -e "/bin/cat /etc/passwd" -c /cgi-bin/test.cgi
+
 Scans for http://127.0.0.1/cgi-bin/test.cgi and, if found, attempts to cat 
 /etc/passwd
 
 ./shocker.py -H www.example.com -p 8001 -s
+
 Scan www.example.com on port 8001 using SSL for all scripts in cgi_list and
 attempts the default exploit for any found
 
 ./shocker.py -f ./hostlist
+
 Scans all hosts listed in the file ./hostlist with the default options
 
 Dependencies 

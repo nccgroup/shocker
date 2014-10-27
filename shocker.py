@@ -634,7 +634,7 @@ def main():
     # Handle command line argumemts
     parser = argparse.ArgumentParser(
         description='A Shellshock scanner and exploitation tool',
-        epilog='Examples of use can be found in the source code' 
+        epilog='Examples of use can be found in the README' 
         )
     targets = parser.add_mutually_exclusive_group(required=True)
     targets.add_argument(
