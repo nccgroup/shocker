@@ -83,6 +83,7 @@ Change Log
 Changes in version 0.6 (October 2014)
 * Preventing return codes other than 200 from being considered successes
 * Added ability to specify multiple targets in a file
+* Moved the 'cgi_list' list of scripts to attempt to exploit to a file
 
 Changes in version 0.5 (October 2014)
 * Added ability to specify a single script to target rather than using cgi_list
