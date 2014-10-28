@@ -244,7 +244,7 @@ def main():
    `-' '  `-`-'  `-''  `-`--''  v0.6 
    
  Tom Watson, tom.watson@nccgroup.com
- http://www.github.com/nccgroup/??????????????
+ http://www.github.com/nccgroup/shocker
      
  Released under the GNU Affero General Public License
  (http://www.gnu.org/licenses/agpl-3.0.html)
