@@ -84,6 +84,8 @@ Changes in version 0.6 (October 2014)
 * Preventing return codes other than 200 from being considered successes
 * Added ability to specify multiple targets in a file
 * Moved the 'cgi_list' list of scripts to attempt to exploit to a file
+* Fixed some output formatting issues
+* Fixed valid hostname/IP regex to allow single word hostnames
 
 Changes in version 0.5 (October 2014)
 * Added ability to specify a single script to target rather than using cgi_list
@@ -113,8 +115,6 @@ TODO
 * Fix problem with proxy returning 200 for unavailable URLs/false positives
 * Add Windows and *nix colour support
 * Prettify
-* Move cgi list into a seperate file
-* Get rid of the spurious blank lines in the output
 * Add support for scanning and explointing SSH and SMTP? https://isc.sans.edu/diary/Shellshock+via+SMTP/18879
 * Other stuff. Probably.
 

