@@ -16,24 +16,6 @@ Help Text
 usage: 
 shocker.py 
 
-[-h] (--Hostname HOSTNAME | --file FILE) 
-
-[--port PORT]
-
-[--exploit EXPLOIT]
-
-[--cgi CGI] 
-
-[--proxy PROXY] 
-
-[--ssl]
-
-[--threads THREADS]
-
-[--verbose]
-
-optional arguments:
-
 -h, --help            show this help message and exit
 
 --Hostname HOSTNAME, -H HOSTNAME
