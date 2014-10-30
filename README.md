@@ -98,6 +98,7 @@ TODO
 * Add Windows and *nix colour support
 * Prettify
 * Add support for scanning and explointing SSH and SMTP? https://isc.sans.edu/diary/Shellshock+via+SMTP/18879
+* Add SOCKS proxy support, potentailly using https://github.com/rpicard/socksonsocks/ from Rober Picard
 * Other stuff. Probably.
 
 Thanks to...
