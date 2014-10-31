@@ -62,6 +62,10 @@ Python 2.7+
 
 Change Log
 -------------
+Changes in version 0.7 (November 2014)
+* Add interactive 'psuedo console' for further exploitation of a chosen vulnerable server
+* Attemped to clean up output buffering issues by wrapping sys.stdout in a class which flushes on every call to write
+* Added a progress indicator for use in time consuming tasks to reassure non vebose users
 Changes in version 0.6 (October 2014)
 * Preventing return codes other than 200 from being considered successes
 * Added ability to specify multiple targets in a file

