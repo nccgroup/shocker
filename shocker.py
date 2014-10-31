@@ -76,7 +76,6 @@ def check_hosts(host_target_list, port, verbose):
         except Exception as e:
             print "[!] Exception - %s: %s" % (host, e)
             print "[!] Omitting %s from target list..." % host
-    print "[+] Good to go!"
     return confirmed_hosts
 
 def scan_hosts(protocol, host_target_list, port, cgi_list, proxy, verbose):
