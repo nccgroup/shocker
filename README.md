@@ -87,6 +87,7 @@ Pre 0.4 (October 2014)
 
 TODO
 -------------
+* Implement curses for *nix systems - For the whole application or only psuedo terminal?
 * Thread the initial host check now that multiple targets are supported (and could be make this bit time consuming)
 * Add option to skip initial host checks for the sake of speed?
 * Add some slightly more useful exploitation options. (Shells?)
