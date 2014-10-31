@@ -78,6 +78,7 @@ def check_hosts(host_target_list, port, verbose):
             print "[!] Omitting %s from target list..." % host
     return confirmed_hosts
 
+
 def scan_hosts(protocol, host_target_list, port, cgi_list, proxy, verbose):
     """ Go through each potential cgi in cgi_list spinning up a thread for each
     check. Create Request objects for each check. 
@@ -221,8 +222,6 @@ def ask_for_console(proxy, successful_targets, verbose):
     in a semi interactive way
     successful_targets is a dictionary:
     {url: (header, exploit)}
-
-    CURRENTLY MENU CHOICES ARE WRONG - TO BE FIXED
     """
 
     # Initialise to non zero to enter while loop
@@ -428,8 +427,7 @@ def main():
         if len(successful_targets):
             ask_for_console(proxy, successful_targets, verbose)
     else:
-        print "[+] No potential targets found :("
-    print "[+] The end"
+        print "[+] No potential targets found"
 
 if __name__ == '__main__':
     main()
