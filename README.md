@@ -66,6 +66,7 @@ Changes in version 0.7 (November 2014)
 * Add interactive 'psuedo console' for further exploitation of a chosen vulnerable server
 * Attemped to clean up output buffering issues by wrapping sys.stdout in a class which flushes on every call to write
 * Added a progress indicator for use in time consuming tasks to reassure non vebose users
+
 Changes in version 0.6 (October 2014)
 * Preventing return codes other than 200 from being considered successes
 * Added ability to specify multiple targets in a file
@@ -92,6 +93,7 @@ Pre 0.4 (October 2014)
 TODO
 -------------
 * Thread the initial host check now that multiple targets are supported (and could be make this bit time consuming)
+* Change verbose to integer value - quiet, normal, verbose, debug?
 * Add option to skip initial host checks for the sake of speed?
 * Add some slightly more useful exploitation options. (Shells?)
 * Add a summary of results before exiting
@@ -100,6 +102,7 @@ TODO
 * Implement some form of progress indicator for slow tasks
 * Fix problem with proxy returning 200 for unavailable URLs/false positives
 * Add Windows and *nix colour support
+* Add a timeout in interactive mode for commands which don't return, e.g. /bin/cat /dev/zero
 * Prettify
 * Add support for scanning and explointing SSH and SMTP? https://isc.sans.edu/diary/Shellshock+via+SMTP/18879
 * Add SOCKS proxy support, potentailly using https://github.com/rpicard/socksonsocks/ from Rober Picard
