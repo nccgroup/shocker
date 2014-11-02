@@ -102,11 +102,11 @@ def check_hosts(host_target_list, port, verbose):
         except Exception as e:
             print "[!] Exception - %s: %s" % (host, e)
             print "[!] Omitting %s from target list..." % host
-        if len(host_target_list) > 1:
-            print "[+] %i of %i targets were reachable" % \
-                                (len(confirmed_hosts), number_of_targets)
-        else:
-            print "[+] Target was reachable"
+    if len(host_target_list) > 1:
+        print "[+] %i of %i targets were reachable" % \
+                            (len(confirmed_hosts), number_of_targets)
+    else:
+        print "[+] Target was reachable"
     return confirmed_hosts
 
 
