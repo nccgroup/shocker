@@ -501,6 +501,8 @@ def main():
         successful_targets = do_exploit_cgi(proxy, target_list, command, verbose)
         if len(successful_targets):
             ask_for_console(proxy, successful_targets, verbose)
+        else:
+            print "[-] All exploit attempts failed"
     else:
         print "[+] No targets found to exploit"
 
