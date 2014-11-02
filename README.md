@@ -100,7 +100,6 @@ TODO
 * Add a summary of results before exiting
 * Save results to a file? Format?
 * Eventually the idea is to include multiple possible vectors but currently only one is checked.
-* Implement some form of progress indicator for slow tasks
 * Fix problem with proxy returning 200 for unavailable URLs/false positives
 * Add Windows and *nix colour support
 * Add a timeout in interactive mode for commands which don't return, e.g. /bin/cat /dev/zero

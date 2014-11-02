@@ -284,7 +284,7 @@ def ask_for_console(proxy, successful_targets, verbose):
         target = ordered_url_list[user_input-1]
         header = successful_targets[target][0]
         print "[+] Entering interactive mode for %s" % target
-        print "[+] Enter commands or 'quit'"
+        print "[+] Enter commands (e.g. /bin/cat /etc/passwd) or 'quit'"
 
         while True:
             command = ""
