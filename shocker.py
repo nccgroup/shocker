@@ -76,13 +76,17 @@ def check_hosts(host_target_list, port, verbose):
     """
     
     counter = 0
+    number_of_targets = len (host_target_list)
     confirmed_hosts = [] # List of resoveable and reachable hosts
-    print "[+] Checking setup..."
+    if number_of_targets > 1:
+        print "[+] Checking connectivity to targets..."
+    else:
+        print "[+] Checking connectivity with target..."
     for host in host_target_list:
         counter += 1
         # Show a progress bar unless verbose or there is only 1 host 
-        if not verbose and len(host_target_list) > 1: 
-            print_progress(len(host_target_list), counter) 
+        if not verbose and number_of_targets > 1: 
+            print_progress(number_of_targets, counter) 
 
         try:
             if verbose: print "[I] Checking to see if %s resolves..." % host
@@ -98,6 +102,11 @@ def check_hosts(host_target_list, port, verbose):
         except Exception as e:
             print "[!] Exception - %s: %s" % (host, e)
             print "[!] Omitting %s from target list..." % host
+        if len(host_target_list) > 1:
+            print "[+] %i of %i targets were reachable" % \
+                                (len(confirmed_hosts), number_of_targets)
+        else:
+            print "[+] Target was reachable"
     return confirmed_hosts
 
 def scan_hosts(protocol, host_target_list, port, cgi_list, proxy, verbose):
@@ -190,10 +199,9 @@ def do_exploit_cgi(proxy, target_list, command, verbose):
     successful_targets = OrderedDict()
 
     if len(target_list) > 1:
-        print "[+] %i potential targets found" % len(target_list)
+        print "[+] %i potential targets found, attempting exploits" % len(target_list)
     else:
-        print "[+] 1 potential target found"
-    print "[+] Attempting exploits..."
+        print "[+] 1 potential target found, attempting exploits"
     for target in target_list:
         if verbose: print "[+] Trying exploit for %s" % target 
         if verbose: print "[I] Flag set to: %s" % success_flag
@@ -277,7 +285,7 @@ def ask_for_console(proxy, successful_targets, verbose):
         target = ordered_url_list[user_input-1]
         header = successful_targets[target][0]
         print "[+] Entering interactive mode for %s" % target
-        print "  Enter commands or 'quit'"
+        print "[+] Enter commands or 'quit'"
 
         while True:
             command = ""
@@ -347,13 +355,16 @@ def import_cgi_list_from_file(file_name):
     return cgi_list
 
 
-def print_progress(total, count): 
-    lbracket = "["
-    rbracket = "]"
-    completed = "+"
-    incomplete = "-"
+def print_progress(
+                total,
+                count,
+                lbracket = "[",
+                rbracket = "]",
+                completed = ">",
+                incomplete = "-",
+                bar_size  = 50
+                ): 
     percentage_progress = (100.0/float(total))*float(count)
-    bar_size = 50 
     bar = int(bar_size * percentage_progress/100)
     print lbracket + completed*bar + incomplete*(bar_size-bar) + rbracket + \
         " (" + str(count).rjust(len(str(total)), " ") + "/" + str(total) + ")\r",
