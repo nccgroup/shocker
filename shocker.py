@@ -240,7 +240,6 @@ def do_exploit_cgi(proxy, target_list, header, command, verbose):
                         print "[!] Maybe try a different exploit command?"
                     buf.close()
                 successful_targets.update({counter: (target, 
-                                                     cve_reference,
                                                      header, 
                                                      exploit)})
 		counter += 1
@@ -278,7 +277,7 @@ def ask_for_console(proxy, successful_targets, verbose):
     would like to choose one of these to send further commands to
     in a semi interactive way
     successful_targets is a dictionary:
-    {url: (header, exploit)}
+    {counter, (target, header, exploit)}
     """
 
     # Initialise to non zero to enter while loop
@@ -286,12 +285,12 @@ def ask_for_console(proxy, successful_targets, verbose):
     
     while user_input is not 0:
         result = ""
-        if len(ordered_url_list) > 1:
+        if len(successful_targets) > 1:
             print "[+] The following URLs appear to be exploitable:"
         else:
             print "[+] The following URL appears to be exploitable:"
-        for x in range(len(ordered_url_list)):
-            print "  [%i] %s" % (x+1, ordered_url_list[x])
+        for x in range(len(successful_targets)):
+            print "  [%i] %s" % (x+1, successful_targets[x])
         print "[+] Would you like to exploit further?"
         user_input = raw_input("[>] Enter an URL number or 0 to exit: ")
         sys.stdout.flush()

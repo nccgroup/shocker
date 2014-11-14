@@ -64,6 +64,7 @@ Change Log
 -------------
 Changes in version 0.8 (November 2014)
 * Added to the shocker-cgi_list file
+* Added ability to specify HTTP header from the command line
 
 Changes in version 0.7 (November 2014)
 * Add interactive 'psuedo console' for further exploitation of a chosen vulnerable server
