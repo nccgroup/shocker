@@ -114,3 +114,7 @@ TODO
 Thanks to...
 -------------
 Anthony Caulfield @ NCC for time and effort reviewing early versions
+
+Shellshock Information
+-------------
+https://shellshocker.net/ is a good reference and includes a basic online testing tool, a locally runnable test script for all the different known versions and some good background reading and links to other resources
