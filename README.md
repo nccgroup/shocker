@@ -23,6 +23,8 @@ shocker.py
 
 --file FILE, -f FILE  File containing a list of targets
 
+--header              Specify HTTP header to use (default Content-type)
+
 --port PORT, -p PORT  The target port number (default=80)
 
 --exploit EXPLOIT, -e EXPLOIT
@@ -65,6 +67,7 @@ Change Log
 Changes in version 0.8 (November 2014)
 * Added to the shocker-cgi_list file
 * Added ability to specify HTTP header from the command line
+* Added 20 second timeout for commands to prevent prgoramme hanging
 
 Changes in version 0.7 (November 2014)
 * Add interactive 'psuedo console' for further exploitation of a chosen vulnerable server
@@ -97,6 +100,7 @@ Pre 0.4 (October 2014)
 TODO
 -------------
 * Implement curses for *nix systems - For the whole application or only psuedo terminal?
+* Add support for DHCP poisoning?
 * Thread the initial host check now that multiple targets are supported (and could be make this bit time consuming)
 * Change verbose to integer value - quiet, normal, verbose, debug?
 * Add option to skip initial host checks for the sake of speed?
@@ -106,7 +110,6 @@ TODO
 * Eventually the idea is to include multiple possible vectors but currently only one is checked.
 * Fix problem with proxy returning 200 for unavailable URLs/false positives
 * Add Windows and *nix colour support
-* Add a timeout in interactive mode for commands which don't return, e.g. /bin/cat /dev/zero
 * Prettify
 * Add support for scanning and explointing SSH and SMTP? https://isc.sans.edu/diary/Shellshock+via+SMTP/18879
 * Add SOCKS proxy support, potentailly using https://github.com/rpicard/socksonsocks/ from Rober Picard

