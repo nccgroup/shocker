@@ -62,6 +62,9 @@ Python 2.7+
 
 Change Log
 -------------
+Changes in version 0.8 (November 2014)
+* Added to the shocker-cgi_list file
+
 Changes in version 0.7 (November 2014)
 * Add interactive 'psuedo console' for further exploitation of a chosen vulnerable server
 * Attemped to clean up output buffering issues by wrapping sys.stdout in a class which flushes on every call to write
