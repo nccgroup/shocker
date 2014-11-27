@@ -431,11 +431,92 @@ def look_for_dhcp_servers():
 
     conf.checkIPaddr = False
     fam,hw = get_if_raw_hwaddr(conf.iface)
-
-    results = srp(Ether(dst="ff:ff:ff:ff:ff:ff")/IP(src="0.0.0.0",dst="255.255.255.255")/UDP(sport=68,dport=67)/BOOTP(chaddr=hw)/DHCP(options=[("message-type","discover")]))
+    randxid = random.randrange(1, 4294967295)
+    results = srp(Ether(dst="ff:ff:ff:ff:ff:ff")/
+            IP(src="0.0.0.0", dst="255.255.255.255")/
+            UDP(sport=68, dport=67)/
+            BOOTP(chaddr=hw, xid=randxid)/
+            DHCP(options=[
+                ("message-type","discover"),
+                ("end"),
+                ("pad"),
+                ("pad"),
+                ("pad"),
+                ("pad"),
+                ("pad"),
+                ("pad"),
+                ("pad"),
+                ("pad"),
+                ("pad"),
+                ("pad"),
+                ("pad"),
+                ("pad"),
+                ("pad"),
+                ("pad"),
+                ("pad"),
+                ("pad"),
+                ("pad"),
+                ("pad"),
+                ("pad"),
+                ("pad"),
+                ("pad"),
+                ("pad"),
+                ("pad"),
+                ("pad"),
+                ("pad"),
+                ("pad"),
+                ("pad"),
+                ("pad"),
+                ("pad"),
+                ("pad"),
+                ("pad"),
+                ("pad"),
+                ("pad"),
+                ("pad"),
+                ("pad"),
+                ("pad"),
+                ("pad"),
+                ("pad"),
+                ("pad"),
+                ("pad"),
+                ("pad"),
+                ("pad"),
+                ("pad"),
+                ("pad"),
+                ("pad"),
+                ("pad"),
+                ("pad"),
+                ("pad"),
+                ("pad"),
+                ("pad"),
+                ("pad"),
+                ("pad"),
+                ("pad"),
+                ("pad"),
+                ("pad"),
+                ("pad"),
+                ("pad"),
+                ("pad"),
+                ("pad"),
+                ("pad"),
+                ("pad"),
+                ("pad"),
+                ("pad")
+                ]),
+            verbose=0
+            )
     answered, unanswered = results
-    print answered[0]
+    answer = answered[0][1]
+    print "[!] " + answer.summary()
+    print "[+] Server IP: %s" % answer[IP].src
+    print "[!] " + str(answer[DHCP].options)
+    for option in answer[DHCP].options:
+        print "[+] OPTION: " + str(option)
+    if answered[0][1][BOOTP].xid==randxid: print "[+] Replied received..."
 
+
+def poison_dhcp_clients():
+    pass
 
 def main():
     print """
@@ -541,8 +622,10 @@ def main():
 
     # Assign options to variables
     if args.Mode == "dhcp":
+        print "[+] DHCP ATTACK MODE SELECTED"
         do_dhcp_attack()
     elif args.Mode == "http":
+        print "[+] HTTP ATTACK MODE SELECTED"
         if args.Hostname:
             host_target_list = [args.Hostname]
         elif args.file:
