@@ -92,6 +92,7 @@ Pre 0.4 (October 2014)
 
 TODO
 -------------
+* Set a global timeout for urllib2.open calls (urllib2.open(url,None,TIMEOUT))
 * Implement curses for *nix systems - For the whole application or only psuedo terminal?
 * Thread the initial host check now that multiple targets are supported (and could be make this bit time consuming)
 * Change verbose to integer value - quiet, normal, verbose, debug?
