@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 """
-shocker.py v0.7
+shocker.py v0.71
 A tool to find and exploit webservers vulnerable to Shellshock
 
 ##############################################################################
@@ -69,6 +69,8 @@ def signal_handler(signal, frame):
 
     sys.exit(0)
 
+# Timeout for urllib2.urlopen requests
+TIMEOUT = 5
 
 def check_hosts(host_target_list, port, verbose):
     """ Do some basic sanity checking on hosts to make sure they resolve
@@ -171,7 +173,7 @@ def do_check_cgi(req, q, verbose):
     """
 
     try:
-        if urllib2.urlopen(req, None, 5).getcode() == 200:
+        if urllib2.urlopen(req, None, TIMEOUT).getcode() == 200:
             q.put(req.get_full_url())
     except Exception as e:
         if verbose: print "[I] %s for %s" % (e, req.get_full_url()) 
@@ -243,7 +245,7 @@ def do_attack(proxy, target, header, attack, verbose):
             if verbose: print "[I] Proxy set to: %s" % str(proxy)
         req.add_header("User-Agent", user_agent)
         req.add_header("Host", host)
-        resp = urllib2.urlopen(req)
+        resp = urllib2.urlopen(req, None, TIMEOUT)
         result =  resp.read()
     except Exception as e:
         if verbose: print "[I] %s - %s" % (target, e) 
@@ -376,7 +378,7 @@ def main():
   (   )|            |            
    `-. |--. .-.  .-.|.-. .-. .--.
   (   )|  |(   )(   |-.'(.-' |   
-   `-' '  `-`-'  `-''  `-`--''  v0.7 
+   `-' '  `-`-'  `-''  `-`--''  v0.71 
    
  Tom Watson, tom.watson@nccgroup.com
  http://www.github.com/nccgroup/shocker
@@ -506,6 +508,6 @@ def main():
     else:
         print "[+] No targets found to exploit"
 
-__version__ = '0.7'
+__version__ = '0.71'
 if __name__ == '__main__':
     main()

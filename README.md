@@ -62,47 +62,42 @@ Python 2.7+
 
 Change Log
 -------------
+Changes in version 0.71 (December 2014)
+* Added timeout to urllib2.urlopen requests using a global 'TIMEOUT'
 Changes in version 0.7 (November 2014)
 * Add interactive 'psuedo console' for further exploitation of a chosen vulnerable server
 * Attemped to clean up output buffering issues by wrapping sys.stdout in a class which flushes on every call to write
 * Added a progress indicator for use in time consuming tasks to reassure non vebose users
-
 Changes in version 0.6 (October 2014)
 * Preventing return codes other than 200 from being considered successes
 * Added ability to specify multiple targets in a file
 * Moved the 'cgi_list' list of scripts to attempt to exploit to a file
 * Fixed some output formatting issues
 * Fixed valid hostname/IP regex to allow single word hostnames
-
 Changes in version 0.5 (October 2014)
 * Added ability to specify a single script to target rather than using cgi_list
 * Introduced a timeout on socket operations for host_check
 * Added some usage examples in the script header
 * Added an epilogue to the help text indicating presence of examples
-
 Changes in version 0.4 (October 2014)
 * Introduced a thread count limit defaulting to 10
 * Removed colour support until I can figure out how to make it work in Windows and *nix equally well
 * Spelling corrections
 * More comprehensive cgi_list
 * Removes success_flag from output
-
 Pre 0.4 (October 2014)
 * No idea
 
 TODO
 -------------
 * Identify and respond correctly to HTTP/200 response - false positives
-* Set a global timeout for urllib2.open calls (urllib2.open(url,None,TIMEOUT))
 * Implement curses for *nix systems - For the whole application or only psuedo terminal?
 * Thread the initial host check now that multiple targets are supported (and could be make this bit time consuming)
 * Change verbose to integer value - quiet, normal, verbose, debug?
 * Add option to skip initial host checks for the sake of speed?
-* Add some slightly more useful exploitation options. (Shells?)
 * Add a summary of results before exiting
 * Save results to a file? Format?
 * Eventually the idea is to include multiple possible vectors but currently only one is checked.
-* Fix problem with proxy returning 200 for unavailable URLs/false positives
 * Add Windows and *nix colour support
 * Add a timeout in interactive mode for commands which don't return, e.g. /bin/cat /dev/zero
 * Prettify
