@@ -398,10 +398,10 @@ def main():
         )
     targets = parser.add_mutually_exclusive_group(required=True)
     targets.add_argument(
-        '--Hostname',
+        '--Host',
         '-H',
         type = str,
-        help = 'A target host'
+        help = 'A target hostname or IP address'
         )
     targets.add_argument(
         '--file',
