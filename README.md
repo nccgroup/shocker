@@ -113,6 +113,14 @@ Pre 0.4 (October 2014)
 
 TODO
 -------------
+DHCP STUFF...
+    * React differently according to whether or not we are DHCP authority
+    * Respond to different DHCP messages appropriately
+    * Alter to allow arguments to be passed to sniff prn
+    * Allow a command to be specified (instead of default /bin/cat /etc/passwd)
+    * Return request relavent responses in poisoned replies
+    * Allow Listening IP and port to be changed/specified
+    * Setup lister for responses
 * Identify and respond correctly to HTTP/200 response - false positives - Low priority/hassle
 * Implement curses for *nix systems - For the whole application or only psuedo terminal? - Low priority/prettiness
 * Thread the initial host check now that multiple targets are supported (and could be make this bit time consuming)
