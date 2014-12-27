@@ -94,7 +94,7 @@ def check_hosts(host_target_list, port, verbose):
             if verbose: print "[I] Checking to see if %s resolves..." % host
             ipaddr = socket.gethostbyname(host)
             if verbose: print "[I] Resolved ok"
-            if verbose: print "[I] Checking to see if %s is reachable on post %s..." % (host, port)
+            if verbose: print "[I] Checking to see if %s is reachable on port %s..." % (host, port)
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             s.settimeout(5.0)
             s.connect((ipaddr, int(port)))
@@ -107,8 +107,10 @@ def check_hosts(host_target_list, port, verbose):
     if len(host_target_list) > 1:
         print "[+] %i of %i targets were reachable" % \
                             (len(confirmed_hosts), number_of_targets)
-    else:
+    elif len(confirmed_hosts) == 1:
         print "[+] Target was reachable"
+    else:
+        print "[+] Host unreachable"
     return confirmed_hosts
 
 
@@ -462,8 +464,8 @@ def main():
     args = parser.parse_args()
 
     # Assign options to variables
-    if args.Hostname:
-        host_target_list = [args.Hostname]
+    if args.Host:
+        host_target_list = [args.Host]
     else:
         host_target_list = get_targets_from_file(args.file)
     if not len(host_target_list) > 0:
