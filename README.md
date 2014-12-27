@@ -18,8 +18,8 @@ shocker.py
 
 -h, --help            show this help message and exit
 
---Hostname HOSTNAME, -H HOSTNAME
-                      A target host
+--Host HOST, -H HOST
+                      A target hostname or IP address
 
 --file FILE, -f FILE  File containing a list of targets
 
@@ -62,6 +62,10 @@ Python 2.7+
 
 Change Log
 -------------
+Changes in version 0.72 (December 2014)
+
+* Minor corrections to logic and typos
+
 Changes in version 0.71 (December 2014)
 
 * Added timeout to urllib2.urlopen requests using a global 'TIMEOUT'
@@ -101,19 +105,19 @@ Pre 0.4 (October 2014)
 
 TODO
 -------------
-* Identify and respond correctly to HTTP/200 response - false positives
-* Implement curses for *nix systems - For the whole application or only psuedo terminal?
+* Identify and respond correctly to HTTP/200 response - false positives - Low priority/hassle
+* Implement curses for *nix systems - For the whole application or only psuedo terminal? - Low priority/prettiness
 * Thread the initial host check now that multiple targets are supported (and could be make this bit time consuming)
 * Change verbose to integer value - quiet, normal, verbose, debug?
 * Add option to skip initial host checks for the sake of speed?
 * Add a summary of results before exiting
 * Save results to a file? Format?
 * Eventually the idea is to include multiple possible vectors but currently only one is checked.
-* Add Windows and *nix colour support
+* Add Windows and *nix colour support - Low priority/prettiness
 * Add a timeout in interactive mode for commands which don't return, e.g. /bin/cat /dev/zero
-* Prettify
+* Prettify - Low priority/pretinness (obviously)
 * Add support for scanning and explointing SSH and SMTP? https://isc.sans.edu/diary/Shellshock+via+SMTP/18879
-* Add SOCKS proxy support, potentailly using https://github.com/rpicard/socksonsocks/ from Rober Picard
+* Add SOCKS proxy support, potentially using https://github.com/rpicard/socksonsocks/ from Rober Picard
 * Other stuff. Probably.
 
 Thanks to...
