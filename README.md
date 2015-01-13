@@ -113,6 +113,7 @@ Pre 0.4 (October 2014)
 
 TODO
 -------------
+* Move to OO - http attack and dhcp attack objects
 DHCP STUFF...
     * React differently according to whether or not we are DHCP authority
     * Respond to different DHCP messages appropriately
