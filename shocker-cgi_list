@@ -395,6 +395,7 @@
 /technote/print.cgi
 /template.cgi
 /test.cgi
+/ucsm/isSamInstalled.cgi
 /upload.cgi
 /userreg.cgi
 /users/scripts/submit.cgi
