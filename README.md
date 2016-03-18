@@ -2,10 +2,10 @@ Shocker
 ======================
 A tool to find and exploit servers vulnerable to Shellshock
 
-Released as open source by NCC Group Plc - http://www.nccgroup.com/
+Released as open source by NCC Group Plc - https://www.nccgroup.trust/
 
 Developed By:
-* Tom Watson, tom [dot] watson [at] nccgroup [dot] com
+* Tom Watson, tom [dot] watson [at] nccgroup [dot] trust
 
 https://github.com/nccgroup/shocker
 
@@ -62,6 +62,10 @@ Python 2.7+
 
 Change Log
 -------------
+Changes in version 1.0 (March 2016)
+
+* Some additional scripts contributed and updates to some comments, URLs and contact details 
+
 Changes in version 0.72 (December 2014)
 
 * Minor corrections to logic and typos
