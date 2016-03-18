@@ -1,18 +1,18 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
 """
-shocker.py v0.72
+shocker.py v1.0
 A tool to find and exploit webservers vulnerable to Shellshock
 
 ##############################################################################
 # Released as open source by NCC Group Plc - http://www.nccgroup.com/        #
 #                                                                            #
-# Developed by Tom Watson, tom.watson@nccgroup.com                           #
+# Developed by Tom Watson, tom.watson@nccgroup.trust                         #
 #                                                                            #
-# http://www.github.com/nccgroup/shocker                                     #
+# https://www.github.com/nccgroup/shocker                                    #
 #                                                                            #
 # Released under the GNU Affero General Public License                       #
-# (http://www.gnu.org/licenses/agpl-3.0.html)                                #
+# (https://www.gnu.org/licenses/agpl-3.0.html)                               #
 ##############################################################################
 
 Usage examples:
@@ -45,7 +45,7 @@ from collections import OrderedDict
 
 
 # Wrapper object for sys.sdout to elimate buffering
-# (http://stackoverflow.com/questions/107705/python-output-buffering)
+# (https://stackoverflow.com/questions/107705/python-output-buffering)
 class Unbuffered(object):
     def __init__(self, stream):
         self.stream = stream
@@ -380,13 +380,13 @@ def main():
   (   )|            |            
    `-. |--. .-.  .-.|.-. .-. .--.
   (   )|  |(   )(   |-.'(.-' |   
-   `-' '  `-`-'  `-''  `-`--''  v0.72 
+   `-' '  `-`-'  `-''  `-`--''  v1.0 
    
- Tom Watson, tom.watson@nccgroup.com
- http://www.github.com/nccgroup/shocker
+ Tom Watson, tom.watson@nccgroup.trust
+ https://www.github.com/nccgroup/shocker
      
  Released under the GNU Affero General Public License
- (http://www.gnu.org/licenses/agpl-3.0.html)
+ (https://www.gnu.org/licenses/agpl-3.0.html)
     
     """ 
     
@@ -510,6 +510,6 @@ def main():
     else:
         print "[+] No targets found to exploit"
 
-__version__ = '0.72'
+__version__ = '1.0'
 if __name__ == '__main__':
     main()
