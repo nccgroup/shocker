@@ -2,6 +2,8 @@ Shocker
 ======================
 A tool to find and exploit servers vulnerable to Shellshock
 
+Ref: https://en.wikipedia.org/wiki/Shellshock_(software_bug)
+
 Released as open source by NCC Group Plc - https://www.nccgroup.trust/
 
 Developed By:
@@ -127,4 +129,5 @@ TODO
 Thanks to...
 -------------
 Anthony Caulfield @ NCC for time and effort reviewing early versions
+
 Brendan Coles @ NCC for his support and contributions
