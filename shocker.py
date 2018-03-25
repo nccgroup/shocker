@@ -519,6 +519,6 @@ def main():
     else:
         print "[+] No targets found to exploit"
 
-__version__ = '1.0'
+__version__ = '1.1'
 if __name__ == '__main__':
     main()
