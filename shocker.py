@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 """
-shocker.py v1.0
+shocker.py v1.1
 A tool to find and exploit webservers vulnerable to Shellshock
 
 ##############################################################################
@@ -318,12 +318,13 @@ def ask_for_console(proxy, successful_targets, verbose):
                 sys.stdout.flush()
 
 
-def validate_address(hostaddress):
+def validate_address(hostaddress, debug):
     """ Attempt to identify if proposed host address is invalid by matching
     against some very rough regexes """
 
     singleIP_pattern = re.compile('^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$')
     FQDN_pattern = re.compile('^(\w+\.)*\w+$')
+    if debug: print "[D] Evaluating host '%s'" % hostaddress
     if singleIP_pattern.match(hostaddress) or FQDN_pattern.match(hostaddress):
         return True 
     else:
@@ -331,7 +332,7 @@ def validate_address(hostaddress):
         exit(0)
 
 
-def get_targets_from_file(file_name):
+def get_targets_from_file(file_name, debug):
     """ Import targets to scan from file
     """
 
@@ -339,7 +340,7 @@ def get_targets_from_file(file_name):
     with open(file_name, 'r') as f:
         for line in f:
             line = line.strip()
-            if not line.startswith('#') and validate_address(line):
+            if not line.startswith('#') and validate_address(line, debug):
                 host_target_list.append(line)
     print "[+] %i hosts imported from %s" % (len(host_target_list), file_name)
     return host_target_list
@@ -380,7 +381,7 @@ def main():
   (   )|            |            
    `-. |--. .-.  .-.|.-. .-. .--.
   (   )|  |(   )(   |-.'(.-' |   
-   `-' '  `-`-'  `-''  `-`--''  v1.0 
+   `-' '  `-`-'  `-''  `-`--''  v1.1 
    
  Tom Watson, tom.watson@nccgroup.trust
  https://www.github.com/nccgroup/shocker
@@ -461,13 +462,21 @@ def main():
         default = False,
         help = "Be verbose in output"
         )
+    parser.add_argument(
+        '--debug',
+        '-d',
+        action = "store_true",
+        default = False,
+        help = "Output debugging information during execution"
+        )
     args = parser.parse_args()
 
     # Assign options to variables
+    debug = args.debug
     if args.Host:
         host_target_list = [args.Host]
     else:
-        host_target_list = get_targets_from_file(args.file)
+        host_target_list = get_targets_from_file(args.file, debug)
     if not len(host_target_list) > 0:
         print "[-] No valid targets provided, exiting..."
         exit (0)
