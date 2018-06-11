@@ -27,8 +27,7 @@ shocker.py
 
 --port PORT, -p PORT  The target port number (default=80)
 
---exploit EXPLOIT, -e EXPLOIT
-                      Command to execute (default=/bin/uname -a)
+--command COMMAND     Command to execute (default=/bin/uname -a)
 
 --cgi CGI, -c CGI     Single CGI to check (e.g. /cgi-bin/test.cgi)
 
@@ -44,7 +43,7 @@ shocker.py
 
 Usage Examples
 -------------
-`./shocker.py -H 127.0.0.1 -e "/bin/cat /etc/passwd" -c /cgi-bin/test.cgi`
+`./shocker.py -H 127.0.0.1 --command "/bin/cat /etc/passwd" -c /cgi-bin/test.cgi`
 
 Scans for http://127.0.0.1/cgi-bin/test.cgi and, if found, attempts to cat 
 /etc/passwd
@@ -64,6 +63,10 @@ Python 2.7+
 
 Change Log
 -------------
+Changes in version 1.1 (June 2018)
+
+* Added some additinoal debugging  functionality and corrected help text
+
 Changes in version 1.0 (March 2016)
 
 * Some additional scripts contributed and updates to some comments, URLs and contact details 
